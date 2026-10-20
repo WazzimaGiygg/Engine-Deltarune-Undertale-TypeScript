@@ -1,0 +1,6 @@
+{
+  "name": "Undertale & Deltarune Engine RPG",
+  "description": "Uma recriação fiel da jogabilidade de Undertale e Deltarune com motor em TypeScript e Phaser, movimentação no mapa, batalhas interativas com desvio de balas (bullet-hell), menu, inventário e equipamentos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
