@@ -34,7 +34,7 @@ class SoundSynthesizer {
   }
 
   // Blip when characters talk (Undertale dialogue typing sound)
-  public playVoiceBlip(character: 'frisk' | 'sans' | 'papyrus' | 'toriel' | 'monster' = 'monster') {
+  public playVoiceBlip(character: 'frisk' | 'sans' | 'papyrus' | 'toriel' | 'monster' | 'flowey' = 'monster') {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
@@ -46,6 +46,10 @@ class SoundSynthesizer {
     let type: OscillatorType = 'triangle';
 
     switch (character) {
+      case 'flowey':
+        freq = 520;
+        type = 'triangle';
+        break;
       case 'papyrus':
         freq = 310;
         type = 'sawtooth';

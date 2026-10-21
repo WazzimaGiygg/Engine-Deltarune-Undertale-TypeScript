@@ -28,6 +28,7 @@ interface Bullet {
 export class BattleScene extends Phaser.Scene {
   private enemyData!: EnemyData;
   private currentPhase: BattlePhase = 'INTRO';
+  private isInputLocked = false; // V.0.0.2-SC.1: Lock inputs during action execution
 
   // Visual Components
   private enemySprite!: Phaser.GameObjects.Sprite;
@@ -70,7 +71,7 @@ export class BattleScene extends Phaser.Scene {
   // Bullet Hell
   private bullets: Bullet[] = [];
   private attackTimer = 0;
-  private attackDuration = 7000;
+  private attackDuration = 6500;
   private invincibilityTimer = 0;
   private soulSpeed = 160;
 
@@ -93,13 +94,19 @@ export class BattleScene extends Phaser.Scene {
   }
 
   init(data: { enemyId?: string }) {
+    // V.0.0.2-GH.1: Clean re-initialization to avoid freezes
     const enemyFactory = (data?.enemyId && ENEMIES[data.enemyId]) || ENEMIES.froggit;
     this.enemyData = enemyFactory();
     this.currentPhase = 'INTRO';
+    this.isInputLocked = false;
     this.selectedButtonIndex = 0;
     this.selectedSubMenuIndex = 0;
     this.bullets = [];
+    this.attackTimer = 0;
     this.invincibilityTimer = 0;
+    this.targetMoving = false;
+    this.targetBarX = 0;
+    this.boxBounds = { ...this.defaultBoxBounds };
   }
 
   create() {
@@ -120,35 +127,50 @@ export class BattleScene extends Phaser.Scene {
       ESC: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC),
     };
 
-    // 1. Draw Enemy
-    this.enemySprite = this.add.sprite(320, 130, this.enemyData.spriteKey);
+    // 1. Draw Enemy with balanced mob sizing (V.0.0.2-8I.1)
+    let spriteScale = 1.0;
+    let spriteY = 125;
+
+    if (this.enemyData.id === 'sir_ossos') {
+      spriteScale = 0.95;
+      spriteY = 120;
+    } else if (this.enemyData.id === 'froggit') {
+      spriteScale = 0.9;
+      spriteY = 135;
+    } else if (this.enemyData.id === 'deltajester') {
+      spriteScale = 1.0;
+      spriteY = 125;
+    }
+
+    this.enemySprite = this.add.sprite(320, spriteY, this.enemyData.spriteKey);
+    this.enemySprite.setScale(spriteScale);
     this.enemySprite.setDepth(10);
+
     this.tweens.add({
       targets: this.enemySprite,
-      y: 125,
+      y: spriteY - 5,
       duration: 1000,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
 
-    // 2. Enemy Speech Bubble
-    this.enemySpeechBubble = this.add.container(420, 90);
-    this.enemySpeechBubble.setDepth(15);
+    // 2. Enemy Speech Bubble (V.0.0.2-H6.1: Strictly placed at upper right, avoiding heart box)
+    this.enemySpeechBubble = this.add.container(400, 65);
+    this.enemySpeechBubble.setDepth(20);
     this.enemySpeechBubble.setVisible(false);
 
     const bubbleBg = this.add.graphics();
     bubbleBg.fillStyle(0xffffff, 1);
-    bubbleBg.fillRoundedRect(0, 0, 170, 60, 8);
-    // Bubble pointer
-    bubbleBg.fillTriangle(0, 20, -10, 25, 0, 30);
+    bubbleBg.fillRoundedRect(0, 0, 180, 56, 6);
+    bubbleBg.fillTriangle(0, 20, -10, 24, 0, 28);
     this.enemySpeechBubble.add(bubbleBg);
 
-    this.enemySpeechText = this.add.text(12, 10, '', {
+    this.enemySpeechText = this.add.text(10, 8, '', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '9px',
+      fontSize: '8px',
       color: '#000000',
-      wordWrap: { width: 145 },
+      wordWrap: { width: 160 },
       lineSpacing: 4,
     });
     this.enemySpeechBubble.add(this.enemySpeechText);
@@ -159,49 +181,55 @@ export class BattleScene extends Phaser.Scene {
     this.redrawBattleBox(this.defaultBoxBounds);
 
     // 4. Narrative / Menu Text inside Box
-    this.narrativeText = this.add.text(90, 265, '', {
+    this.narrativeText = this.add.text(95, 268, '', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '13px',
+      fontSize: '12px',
       color: '#ffffff',
-      wordWrap: { width: 460 },
+      wordWrap: { width: 450 },
       lineSpacing: 10,
     });
     this.narrativeText.setDepth(8);
 
     // 5. Soul in Bullet Hell mode
     this.soulPlayable = this.add.sprite(320, 310, 'soul_red');
-    this.soulPlayable.setDepth(20);
+    this.soulPlayable.setDepth(25);
     this.soulPlayable.setVisible(false);
 
     // 6. Soul Cursor for Menu navigation
     this.soulCursor = this.add.sprite(80, 442, 'soul_red');
     this.soulCursor.setDepth(25);
 
-    // 7. Target Meter Container (FIGHT mini-game)
+    // 7. Target Meter Container
     this.createTargetMeter();
 
-    // 8. Bottom HUD Stats (Name, LV, HP bar)
+    // 8. Bottom HUD Stats
     this.createHUD();
 
-    // 9. Bottom 4 Buttons (FIGHT, ACT, ITEM, MERCY)
+    // 9. Bottom 4 Buttons
     this.createButtons();
 
     // Start with Intro message
     this.narrativeText.setText(this.enemyData.introText);
     this.currentPhase = 'MENU_MAIN';
+    this.isInputLocked = false;
     this.updateButtonSoulPosition();
 
     // Listen to virtual action triggers
     this.events.on('virtual_action', this.handleVirtualAction, this);
+
+    // V.0.0.2-GH.1: Clean up on scene shutdown
+    this.events.once('shutdown', () => {
+      this.events.off('virtual_action', this.handleVirtualAction, this);
+      this.bullets.forEach((b) => b.sprite.destroy());
+      this.bullets = [];
+    });
   }
 
   private redrawBattleBox(bounds: { x: number; y: number; w: number; h: number }) {
     this.boxBounds = bounds;
     this.battleBox.clear();
-    // Black background
     this.battleBox.fillStyle(0x000000, 1);
     this.battleBox.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-    // 5px White crisp border
     this.battleBox.lineStyle(5, 0xffffff, 1);
     this.battleBox.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
   }
@@ -214,7 +242,6 @@ export class BattleScene extends Phaser.Scene {
     const meterBg = this.add.image(0, 0, 'target_meter');
     this.targetMeterContainer.add(meterBg);
 
-    // Moving strike bar
     this.targetBarLine = this.add.rectangle(-220, 0, 12, 100, 0xffffff, 1);
     this.targetMeterContainer.add(this.targetBarLine);
   }
@@ -224,14 +251,14 @@ export class BattleScene extends Phaser.Scene {
 
     this.nameText = this.add.text(70, 400, stats.name, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '14px',
+      fontSize: '13px',
       color: '#ffffff',
     });
     this.nameText.setDepth(15);
 
     this.lvText = this.add.text(190, 400, `LV ${stats.lv}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '14px',
+      fontSize: '13px',
       color: '#ffffff',
     });
     this.lvText.setDepth(15);
@@ -243,7 +270,6 @@ export class BattleScene extends Phaser.Scene {
     });
     hpLabel.setDepth(15);
 
-    // HP Bar
     this.hpBarBg = this.add.rectangle(320, 407, 100, 14, 0xc0392b);
     this.hpBarBg.setOrigin(0, 0.5);
     this.hpBarBg.setDepth(15);
@@ -283,7 +309,6 @@ export class BattleScene extends Phaser.Scene {
       const container = this.add.container(cfg.x, 442);
       container.setDepth(15);
 
-      // Button background border (Undertale orange border)
       const border = this.add.graphics();
       border.lineStyle(3, 0xe67e22, 1);
       border.strokeRoundedRect(-52, -18, 104, 36, 4);
@@ -297,11 +322,10 @@ export class BattleScene extends Phaser.Scene {
       label.setOrigin(0.5);
       container.add(label);
 
-      // Mouse click support on buttons
       container.setSize(104, 36);
       container.setInteractive({ useHandCursor: true });
       container.on('pointerdown', () => {
-        if (this.currentPhase === 'MENU_MAIN') {
+        if (!this.isInputLocked && this.currentPhase === 'MENU_MAIN') {
           this.selectedButtonIndex = idx;
           this.updateButtonSoulPosition();
           soundManager.playMenuSelect();
@@ -348,6 +372,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleMainMenuInput() {
+    if (this.isInputLocked) return; // V.0.0.2-SC.1
+
     const left =
       Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
       Phaser.Input.Keyboard.JustDown(this.wasd.A);
@@ -375,6 +401,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private confirmMainMenuSelection() {
+    if (this.isInputLocked) return;
+
     const active = this.buttons[this.selectedButtonIndex].name;
 
     if (active === 'FIGHT') {
@@ -413,6 +441,7 @@ export class BattleScene extends Phaser.Scene {
 
     if (hit || this.targetBarX >= 220) {
       this.targetMoving = false;
+      this.isInputLocked = true; // Lock key input until next turn
       this.executePlayerAttack(this.targetBarX);
     }
   }
@@ -427,7 +456,6 @@ export class BattleScene extends Phaser.Scene {
     let isCritical = false;
 
     if (distFromCenter < 20) {
-      // CRITICAL HIT!
       damage = Math.floor(baseAtk * 2.2);
       isCritical = true;
     } else if (distFromCenter < 80) {
@@ -438,12 +466,10 @@ export class BattleScene extends Phaser.Scene {
       damage = Math.max(1, Math.floor(baseAtk * 0.4));
     }
 
-    // Play Slash FX
     soundManager.playSlash();
     const slash = this.add.sprite(this.enemySprite.x, this.enemySprite.y, 'fx_slash');
     slash.setDepth(30);
 
-    // Enemy Shake
     this.tweens.add({
       targets: this.enemySprite,
       x: this.enemySprite.x + (isCritical ? 14 : 7),
@@ -458,12 +484,9 @@ export class BattleScene extends Phaser.Scene {
       scaleX: 1.5,
       scaleY: 1.5,
       duration: 300,
-      onComplete: () => {
-        slash.destroy();
-      },
+      onComplete: () => slash.destroy(),
     });
 
-    // Damage Number Popup
     const dmgText = this.add.text(
       this.enemySprite.x,
       this.enemySprite.y - 40,
@@ -482,9 +505,7 @@ export class BattleScene extends Phaser.Scene {
       y: dmgText.y - 30,
       alpha: 0,
       duration: 1000,
-      onComplete: () => {
-        dmgText.destroy();
-      },
+      onComplete: () => dmgText.destroy(),
     });
 
     this.enemyData.hp = Math.max(0, this.enemyData.hp - damage);
@@ -507,7 +528,6 @@ export class BattleScene extends Phaser.Scene {
     this.narrativeText.setVisible(false);
     this.clearSubMenuItems();
 
-    // Render acts in 2 columns
     this.selectedSubMenuIndex = 0;
     this.enemyData.acts.forEach((act, idx) => {
       const col = idx % 2;
@@ -520,8 +540,10 @@ export class BattleScene extends Phaser.Scene {
       text.setDepth(10);
       text.setInteractive({ useHandCursor: true });
       text.on('pointerdown', () => {
-        this.selectedSubMenuIndex = idx;
-        this.confirmSubMenuSelection();
+        if (!this.isInputLocked) {
+          this.selectedSubMenuIndex = idx;
+          this.confirmSubMenuSelection();
+        }
       });
       this.subMenuItems.push(text);
     });
@@ -559,8 +581,10 @@ export class BattleScene extends Phaser.Scene {
       text.setDepth(10);
       text.setInteractive({ useHandCursor: true });
       text.on('pointerdown', () => {
-        this.selectedSubMenuIndex = idx;
-        this.confirmSubMenuSelection();
+        if (!this.isInputLocked) {
+          this.selectedSubMenuIndex = idx;
+          this.confirmSubMenuSelection();
+        }
       });
       this.subMenuItems.push(text);
     });
@@ -577,7 +601,6 @@ export class BattleScene extends Phaser.Scene {
     this.selectedSubMenuIndex = 0;
     const canSpare = this.enemyData.mercyProgress >= 100;
 
-    // Option 1: Poupar (Yellow if ready!)
     const spareText = this.add.text(
       120,
       285,
@@ -591,12 +614,13 @@ export class BattleScene extends Phaser.Scene {
     spareText.setDepth(10);
     spareText.setInteractive({ useHandCursor: true });
     spareText.on('pointerdown', () => {
-      this.selectedSubMenuIndex = 0;
-      this.confirmSubMenuSelection();
+      if (!this.isInputLocked) {
+        this.selectedSubMenuIndex = 0;
+        this.confirmSubMenuSelection();
+      }
     });
     this.subMenuItems.push(spareText);
 
-    // Option 2: Fugir
     const fleeText = this.add.text(120, 325, '* Fugir do combate', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '12px',
@@ -605,8 +629,10 @@ export class BattleScene extends Phaser.Scene {
     fleeText.setDepth(10);
     fleeText.setInteractive({ useHandCursor: true });
     fleeText.on('pointerdown', () => {
-      this.selectedSubMenuIndex = 1;
-      this.confirmSubMenuSelection();
+      if (!this.isInputLocked) {
+        this.selectedSubMenuIndex = 1;
+        this.confirmSubMenuSelection();
+      }
     });
     this.subMenuItems.push(fleeText);
 
@@ -628,6 +654,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleSubMenuInput() {
+    if (this.isInputLocked) return; // V.0.0.2-SC.1
+
     const left =
       Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
       Phaser.Input.Keyboard.JustDown(this.wasd.A);
@@ -664,7 +692,6 @@ export class BattleScene extends Phaser.Scene {
       soundManager.playMenuSelect();
       this.confirmSubMenuSelection();
     } else if (cancel) {
-      // Go back to main menu
       soundManager.playMenuSelect();
       this.returnToMainMenu();
     }
@@ -675,19 +702,24 @@ export class BattleScene extends Phaser.Scene {
     this.narrativeText.setVisible(true);
     this.narrativeText.setText(this.enemyData.introText);
     this.currentPhase = 'MENU_MAIN';
+    this.isInputLocked = false;
     this.updateButtonSoulPosition();
   }
 
   private confirmSubMenuSelection() {
+    if (this.isInputLocked) return;
+
     if (this.currentPhase === 'MENU_ACT') {
       const act = this.enemyData.acts[this.selectedSubMenuIndex];
       if (act) {
+        this.isInputLocked = true; // Lock key input until next turn
         this.executeAct(act);
       }
     } else if (this.currentPhase === 'MENU_ITEM') {
       const stats = gameState.getStats();
       const item = stats.inventory[this.selectedSubMenuIndex];
       if (item) {
+        this.isInputLocked = true;
         const res = gameState.useItem(this.selectedSubMenuIndex);
         this.refreshHUD();
         this.clearSubMenuItems();
@@ -703,10 +735,11 @@ export class BattleScene extends Phaser.Scene {
       }
     } else if (this.currentPhase === 'MENU_MERCY') {
       if (this.selectedSubMenuIndex === 0) {
-        // Spare attempt
         if (this.enemyData.mercyProgress >= 100) {
+          this.isInputLocked = true;
           this.handleEnemySpared();
         } else {
+          this.isInputLocked = true;
           this.clearSubMenuItems();
           this.narrativeText.setVisible(true);
           this.narrativeText.setText(`* O nome de ${this.enemyData.name} ainda não é amarelo. Ele ainda quer lutar!`);
@@ -716,7 +749,7 @@ export class BattleScene extends Phaser.Scene {
           });
         }
       } else {
-        // Flee attempt
+        this.isInputLocked = true;
         this.handleFlee();
       }
     }
@@ -737,7 +770,7 @@ export class BattleScene extends Phaser.Scene {
     this.narrativeText.setText(act.resultText);
     this.soulCursor.setVisible(false);
 
-    // Show enemy speech reply
+    // Show enemy speech reply at upper right
     this.showEnemySpeech(act.enemyReply);
 
     this.time.delayedCall(2000, () => {
@@ -761,17 +794,17 @@ export class BattleScene extends Phaser.Scene {
     this.currentPhase = 'ENEMY_ATTACK';
     this.narrativeText.setVisible(false);
     this.soulCursor.setVisible(false);
+    this.hideEnemySpeech(); // V.0.0.2-H6.1: Guarantee dialogue bubble is hidden during dodging
     this.bullets = [];
     this.attackTimer = 0;
 
-    // Pick random banter dialogue
     const randomLine =
       this.enemyData.dialogueLines[
         Math.floor(Math.random() * this.enemyData.dialogueLines.length)
       ];
     this.showEnemySpeech(randomLine);
 
-    this.time.delayedCall(1200, () => {
+    this.time.delayedCall(1000, () => {
       this.hideEnemySpeech();
 
       // Smoothly resize box to bullet-hell arena
@@ -805,9 +838,8 @@ export class BattleScene extends Phaser.Scene {
       ];
 
     if (pattern === 'froggit_hops' || pattern === 'froggit_flies') {
-      // Froggit Flies and jumping frogs
       for (let i = 0; i < 6; i++) {
-        this.time.delayedCall(i * 900, () => {
+        this.time.delayedCall(i * 850, () => {
           if (this.currentPhase !== 'ENEMY_ATTACK') return;
           const fromLeft = Math.random() > 0.5;
           const fly = this.add.sprite(
@@ -818,16 +850,15 @@ export class BattleScene extends Phaser.Scene {
           fly.setDepth(15);
           this.bullets.push({
             sprite: fly,
-            vx: (fromLeft ? 1 : -1) * (60 + Math.random() * 40),
+            vx: (fromLeft ? 1 : -1) * (65 + Math.random() * 35),
             vy: (Math.random() - 0.5) * 40,
             type: 'normal',
           });
         });
       }
     } else if (pattern === 'bone_slider' || pattern === 'bone_wave') {
-      // Bone sliders across the box floor
       for (let i = 0; i < 5; i++) {
-        this.time.delayedCall(i * 1100, () => {
+        this.time.delayedCall(i * 1050, () => {
           if (this.currentPhase !== 'ENEMY_ATTACK') return;
           const bone = this.add.sprite(
             this.boxBounds.x + this.boxBounds.w + 10,
@@ -837,15 +868,14 @@ export class BattleScene extends Phaser.Scene {
           bone.setDepth(15);
           this.bullets.push({
             sprite: bone,
-            vx: -90,
+            vx: -95,
             vy: 0,
             type: 'normal',
           });
         });
       }
     } else if (pattern === 'blue_attack') {
-      // Blue bones: Stay still to dodge!
-      this.time.delayedCall(500, () => {
+      this.time.delayedCall(400, () => {
         if (this.currentPhase !== 'ENEMY_ATTACK') return;
         const blueBone = this.add.sprite(
           this.boxBounds.x + this.boxBounds.w + 10,
@@ -861,9 +891,8 @@ export class BattleScene extends Phaser.Scene {
         });
       });
     } else {
-      // Chaos stars pattern (Deltajester style)
       for (let i = 0; i < 8; i++) {
-        this.time.delayedCall(i * 700, () => {
+        this.time.delayedCall(i * 650, () => {
           if (this.currentPhase !== 'ENEMY_ATTACK') return;
           const angle = Math.random() * Math.PI * 2;
           const star = this.add.sprite(
@@ -874,8 +903,8 @@ export class BattleScene extends Phaser.Scene {
           star.setDepth(15);
           this.bullets.push({
             sprite: star,
-            vx: -Math.cos(angle) * 80,
-            vy: -Math.sin(angle) * 80,
+            vx: -Math.cos(angle) * 85,
+            vy: -Math.sin(angle) * 85,
             type: 'normal',
           });
         });
@@ -886,7 +915,6 @@ export class BattleScene extends Phaser.Scene {
   private handleBulletHell(_: number, delta: number) {
     this.attackTimer += delta;
 
-    // 1. Move Playable Soul
     let vx = 0;
     let vy = 0;
 
@@ -910,7 +938,6 @@ export class BattleScene extends Phaser.Scene {
       this.soulPlayable.x += vx * this.soulSpeed * (delta / 1000);
       this.soulPlayable.y += vy * this.soulSpeed * (delta / 1000);
 
-      // Clamp inside arena box
       const halfSize = 10;
       this.soulPlayable.x = Phaser.Math.Clamp(
         this.soulPlayable.x,
@@ -924,7 +951,6 @@ export class BattleScene extends Phaser.Scene {
       );
     }
 
-    // 2. Invincibility flash decay
     if (this.invincibilityTimer > 0) {
       this.invincibilityTimer -= delta;
       this.soulPlayable.setAlpha(Math.floor(this.invincibilityTimer / 100) % 2 === 0 ? 0.3 : 1);
@@ -932,17 +958,11 @@ export class BattleScene extends Phaser.Scene {
       this.soulPlayable.setAlpha(1);
     }
 
-    // 3. Update Bullets and Collision
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
       b.sprite.x += b.vx * (delta / 1000);
       b.sprite.y += b.vy * (delta / 1000);
 
-      if (b.customUpdate) {
-        b.customUpdate(0, delta);
-      }
-
-      // Check collision with player soul
       const dist = Phaser.Math.Distance.Between(
         this.soulPlayable.x,
         this.soulPlayable.y,
@@ -951,15 +971,13 @@ export class BattleScene extends Phaser.Scene {
       );
 
       if (dist < 14 && this.invincibilityTimer <= 0) {
-        // If it's a BLUE attack and player is NOT moving, player takes NO damage!
         if (b.type === 'blue' && !isSoulMoving) {
-          // Dodged blue attack successfully!
+          // Blue attack dodged
         } else {
           this.handleSoulHit();
         }
       }
 
-      // Remove off-screen bullets
       if (
         b.sprite.x < this.boxBounds.x - 40 ||
         b.sprite.x > this.boxBounds.x + this.boxBounds.w + 40 ||
@@ -971,7 +989,6 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    // 4. Check Turn End
     if (this.attackTimer >= this.attackDuration) {
       this.endEnemyTurn();
     }
@@ -992,7 +1009,6 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private endEnemyTurn() {
-    // Clear remaining bullets
     this.bullets.forEach((b) => b.sprite.destroy());
     this.bullets = [];
     this.soulPlayable.setVisible(false);
@@ -1011,6 +1027,7 @@ export class BattleScene extends Phaser.Scene {
       },
       onComplete: () => {
         this.currentPhase = 'MENU_MAIN';
+        this.isInputLocked = false; // V.0.0.2-SC.1: Turn returned to player, unlock keys!
         this.narrativeText.setVisible(true);
         this.narrativeText.setText(
           this.enemyData.canSpare
@@ -1025,9 +1042,9 @@ export class BattleScene extends Phaser.Scene {
   // --- 6. OUTCOMES (DEFEAT / SPARE / FLEE / GAME OVER) ---
   private handleEnemyDefeated() {
     this.currentPhase = 'VICTORY';
+    this.isInputLocked = true;
     soundManager.stopMusic();
 
-    // Turn enemy into dust
     this.tweens.add({
       targets: this.enemySprite,
       alpha: 0,
@@ -1050,13 +1067,14 @@ export class BattleScene extends Phaser.Scene {
 
     this.narrativeText.setText(msg);
 
-    this.time.delayedCall(3000, () => {
+    this.time.delayedCall(2800, () => {
       this.scene.start('OverworldScene');
     });
   }
 
   private handleEnemySpared() {
     this.currentPhase = 'VICTORY';
+    this.isInputLocked = true;
     soundManager.playSpare();
     gameState.recordVictory(true);
     gameState.addRewards(0, this.enemyData.goldReward);
@@ -1068,81 +1086,45 @@ export class BattleScene extends Phaser.Scene {
       `* VOCÊ POUPOU ${this.enemyData.name}!\n* Ganhou ${this.enemyData.goldReward} Ouro e 0 EXP.\n* Sua bondade ressoa nas Ruínas.`
     );
 
-    // Enemy fades out peacefully
     this.tweens.add({
       targets: this.enemySprite,
       alpha: 0.1,
       duration: 1200,
     });
 
-    this.time.delayedCall(3000, () => {
+    this.time.delayedCall(2800, () => {
       this.scene.start('OverworldScene');
     });
   }
 
   private handleFlee() {
+    this.isInputLocked = true;
     soundManager.playMenuMove();
     this.clearSubMenuItems();
     this.narrativeText.setVisible(true);
     this.narrativeText.setText('* Você escapou em segurança!');
 
-    this.time.delayedCall(1500, () => {
+    this.time.delayedCall(1400, () => {
       this.scene.start('OverworldScene');
     });
   }
 
+  // V.0.0.2-5S.1: Route to dedicated GameOverScene
   private handleGameOver() {
     this.currentPhase = 'GAME_OVER';
+    this.isInputLocked = true;
     soundManager.stopMusic();
+    this.bullets.forEach((b) => b.sprite.destroy());
+    this.bullets = [];
 
-    // Soul cracks animation
-    this.soulPlayable.setTexture('soul_white');
-    this.time.delayedCall(300, () => {
-      this.soulPlayable.setVisible(false);
-      this.cameras.main.fade(1500, 0, 0, 0);
-      this.time.delayedCall(1600, () => {
-        // Show Game Over prompt
-        const overTitle = this.add.text(320, 200, 'GAME OVER', {
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: '28px',
-          color: '#ffffff',
-        });
-        overTitle.setOrigin(0.5);
-
-        const quote = this.add.text(
-          320,
-          270,
-          'Você não pode desistir agora...\n\nMantenha sua DETERMINAÇÃO!',
-          {
-            fontFamily: '"Press Start 2P", monospace',
-            fontSize: '12px',
-            color: '#ffffff',
-            align: 'center',
-            lineSpacing: 10,
-          }
-        );
-        quote.setOrigin(0.5);
-
-        const retry = this.add.text(320, 370, '[ Pressione Z para Tentar Novamente ]', {
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: '11px',
-          color: '#ffff00',
-        });
-        retry.setOrigin(0.5);
-
-        this.input.keyboard!.once('keydown-Z', () => {
-          gameState.restoreFullHp();
-          this.scene.start('OverworldScene');
-        });
-        this.input.keyboard!.once('keydown-ENTER', () => {
-          gameState.restoreFullHp();
-          this.scene.start('OverworldScene');
-        });
-      });
+    this.time.delayedCall(400, () => {
+      this.scene.start('GameOverScene');
     });
   }
 
   private handleVirtualAction(action: string) {
+    if (this.isInputLocked) return; // V.0.0.2-SC.1
+
     if (this.currentPhase === 'MENU_MAIN') {
       if (action === 'LEFT') {
         this.selectedButtonIndex = (this.selectedButtonIndex - 1 + 4) % 4;
@@ -1173,6 +1155,7 @@ export class BattleScene extends Phaser.Scene {
     } else if (this.currentPhase === 'TARGET_FIGHT') {
       if (action === 'Z') {
         this.targetMoving = false;
+        this.isInputLocked = true;
         this.executePlayerAttack(this.targetBarX);
       }
     }

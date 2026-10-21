@@ -1,0 +1,379 @@
+{
+  "room1_flowerbed": {
+    "id": "room1_flowerbed",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* Um canteiro macio de flores douradas brilhantes.\n* Elas devem ter amortecido sua queda de dezenas de metros.",
+        "portrait": null
+      },
+      {
+        "text": "* Você sente o aroma doce do pólen no ar úmido da caverna.",
+        "portrait": null
+      }
+    ]
+  },
+  "room1_sunlight": {
+    "id": "room1_sunlight",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* Um feixe solitário de luz solar desce através da abertura no topo da montanha.\n* Olhar para cima enche você de DETERMINAÇÃO.",
+        "portrait": null
+      }
+    ]
+  },
+  "flowey_encounter": {
+    "id": "flowey_encounter",
+    "speaker": "Flowey",
+    "defaultVoice": "flowey",
+    "defaultPortrait": "portrait_flowey_happy",
+    "conditionFlag": "flowey_met",
+    "altDialogueId": "flowey_repeat",
+    "pages": [
+      {
+        "text": "* Howdy! Eu sou FLOWEY. FLOWEY a FLOR!",
+        "portrait": "portrait_flowey_happy",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Hmm... Você é novo no Subterrâneo, não é?\n* Puxa, deve estar tão confuso!",
+        "portrait": "portrait_flowey_wink",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Alguém precisa te ensinar como as coisas funcionam por aqui!",
+        "portrait": "portrait_flowey_happy",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Acho que o bom e velho Flowey terá que fazer isso por você.\n* Pronto? Vamos lá!",
+        "portrait": "portrait_flowey_wink",
+        "voice": "flowey"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "flowey_met",
+      "startScene": "FloweyBattleScene"
+    }
+  },
+  "flowey_repeat": {
+    "id": "flowey_repeat",
+    "speaker": "Flowey",
+    "defaultVoice": "flowey",
+    "defaultPortrait": "portrait_flowey_wink",
+    "pages": [
+      {
+        "text": "* O que foi? Ainda esperando por mais 'balinhas da amizade'?",
+        "portrait": "portrait_flowey_wink",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Vá em frente, humano... Toriel está esperando por você logo adiante.",
+        "portrait": "portrait_flowey_happy",
+        "voice": "flowey"
+      }
+    ]
+  },
+  "toriel_welcome": {
+    "id": "toriel_welcome",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "conditionFlag": "toriel_intro_spoken",
+    "altDialogueId": "toriel_repeat",
+    "pages": [
+      {
+        "text": "* Bem-vindo à sua nova casa, pequenino!",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Permita-me educá-lo sobre o funcionamento das Ruínas.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* As Ruínas estão repletas de quebra-cabeças antigos entre portas e corredores.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Para avançar, é preciso desvendá-los. Mas não se preocupe, eu já abri o caminho inicial para você!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Pode me seguir com calma quando estiver pronto, minha criança.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "toriel_intro_spoken"
+    }
+  },
+  "toriel_repeat": {
+    "id": "toriel_repeat",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Você está com fome? Mal posso esperar para assar uma deliciosa Torta de Caramelo para nós!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Lembre-se: se encontrar algum monstro pelo caminho, seja gentil e use o comando [AGIR].",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Estarei logo à frente certificando-me de que o caminho é seguro para você.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "froggit_advice": {
+    "id": "froggit_advice",
+    "speaker": "Froggit",
+    "defaultVoice": "monster",
+    "defaultPortrait": "portrait_froggit",
+    "conditionFlag": "froggit_talked",
+    "altDialogueId": "froggit_repeat",
+    "pages": [
+      {
+        "text": "* Ribbit, ribbit.\n* (Olá humano! Você sabia que nem todo combate precisa terminar em violência?)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      },
+      {
+        "text": "* (Se você conversar, elogiar ou compreender um monstro com [AGIR], o nome dele ficará amarelo!)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      },
+      {
+        "text": "* (Quando isso acontecer, você pode escolher [PIEDADE] e poupá-lo em paz!)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      },
+      {
+        "text": "* (Ah, e pressione [C] no teclado ou o botão C para conferir seus itens e estatísticas!)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "froggit_talked"
+    }
+  },
+  "froggit_repeat": {
+    "id": "froggit_repeat",
+    "speaker": "Froggit",
+    "defaultVoice": "monster",
+    "defaultPortrait": "portrait_froggit",
+    "pages": [
+      {
+        "text": "* Ribbit, ribbit...\n* (Froggit está contemplando o sentido da existência dos lírios d'água.)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      },
+      {
+        "text": "* (Ele pisca respeitosamente na sua direção.)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      }
+    ]
+  },
+  "sans_intro": {
+    "id": "sans_intro",
+    "speaker": "Sans",
+    "defaultVoice": "sans",
+    "defaultPortrait": "portrait_sans_normal",
+    "conditionFlag": "sans_met",
+    "altDialogueId": "sans_repeat",
+    "pages": [
+      {
+        "text": "* e aí, pivete.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* você parece meio... ossudo para andar tão longe sozinho.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      },
+      {
+        "text": "* heheh. piada de esqueleto. eu sei, eu sei, sou hilário.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* tome cuidado por aí. meu irmão papyrus leva o trabalho de vigia muito a sério.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "sans_met"
+    }
+  },
+  "sans_repeat": {
+    "id": "sans_repeat",
+    "speaker": "Sans",
+    "defaultVoice": "sans",
+    "defaultPortrait": "portrait_sans_wink",
+    "pages": [
+      {
+        "text": "* não esquenta a cabeça, pivete.\n* relaxar faz bem pros ossos.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      }
+    ]
+  },
+  "sign_delta_rune": {
+    "id": "sign_delta_rune",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* O emblema gravado na parede púrpura: o lendário Delta Rune.",
+        "portrait": null
+      },
+      {
+        "text": "* Três triângulos coroados por um orbe alado.\n* Uma antiga profecia diz que um anjo descerá e esvaziará o Subterrâneo.",
+        "portrait": null
+      }
+    ]
+  },
+  "sign_ruins_intro": {
+    "id": "sign_ruins_intro",
+    "speaker": "Placa Antiga",
+    "pages": [
+      {
+        "text": "* 'Apenas os determinados podem desvendar os mistérios do Subterrâneo.'",
+        "portrait": null
+      }
+    ]
+  },
+  "sign_controls": {
+    "id": "sign_controls",
+    "speaker": "Placa",
+    "pages": [
+      {
+        "text": "* [SETAS / WASD] - Mover Frisk\n* [Z / ENTER] - Interagir e Avançar Diálogos\n* [X / SHIFT] - Acelerar e Pular Textos\n* [C] - Abrir Menu de Itens e Estatísticas",
+        "portrait": null
+      }
+    ]
+  },
+  "switch_puzzle_1": {
+    "id": "switch_puzzle_1",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* Você pisou no interruptor com um 'CLIQUE' metálico!\n* Os espinhos de ferro ao norte recuaram para dentro do chão.",
+        "portrait": null
+      }
+    ]
+  },
+  "spikes_active": {
+    "id": "spikes_active",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* Espinhos de aço afiados bloqueiam a passagem.\n* Deve haver um interruptor por perto para desativá-los.",
+        "portrait": null
+      }
+    ]
+  },
+  "chest_empty": {
+    "id": "chest_empty",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* O baú de madeira está completamente vazio.",
+        "portrait": null
+      }
+    ]
+  },
+  "chest_full_inventory": {
+    "id": "chest_full_inventory",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* Seu inventário está cheio! Você não pode carregar mais nada no momento.",
+        "portrait": null
+      }
+    ]
+  },
+  "save_toriel_entrance": {
+    "id": "save_toriel_entrance",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* A sombra das Ruínas paira no ar, mas a presença calorosa de Toriel enche você de DETERMINAÇÃO.",
+        "portrait": null
+      }
+    ]
+  },
+  "save_flowerbed": {
+    "id": "save_flowerbed",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* O suave perfume das flores caídas enche você de DETERMINAÇÃO.",
+        "portrait": null
+      }
+    ]
+  },
+  "sir_ossos_encounter": {
+    "id": "sir_ossos_encounter",
+    "speaker": "Sir Ossos",
+    "defaultVoice": "papyrus",
+    "pages": [
+      {
+        "text": "* NYEH HEH HEH! HUMANO!",
+        "voice": "papyrus"
+      },
+      {
+        "text": "* VOCÊ CHEGOU ATÉ O PORTÃO DA CORTE REAL!",
+        "voice": "papyrus"
+      },
+      {
+        "text": "* MEU NOME É SIR OSSOS, O FUTURO CAPITÃO DA GUARDA REAL!",
+        "voice": "papyrus"
+      },
+      {
+        "text": "* PREPARE-SE PARA TESTAR SUA CORAGEM EM COMBATE!",
+        "voice": "papyrus"
+      }
+    ],
+    "onComplete": {
+      "startBattle": "sir_ossos"
+    }
+  },
+  "deltajester_encounter": {
+    "id": "deltajester_encounter",
+    "speaker": "Bufão Caótico",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* CAOS, CAOS! QUER BRINCAR COMIGO, HUMANO?!",
+        "voice": "monster"
+      },
+      {
+        "text": "* O MUNDO GIRA, GIRA, GIRA EM TORNO DE NÓS!",
+        "voice": "monster"
+      },
+      {
+        "text": "* VAMOS VER SE VOCÊ CONSEGUE DESVIAR DE TODAS AS MINHAS CARTAS!",
+        "voice": "monster"
+      }
+    ],
+    "onComplete": {
+      "startBattle": "deltajester"
+    }
+  }
+}

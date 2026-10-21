@@ -110,12 +110,32 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
             <button
               onClick={() => {
                 soundManager.playMenuSelect();
-                onWarpRoom('ruins_entrance', 320, 300);
+                onWarpRoom('room_awakening', 320, 280);
                 onClose();
               }}
-              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
             >
-              • Entrada & Flores Douradas
+              • 0. O Despertar (Flores)
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_flowey', 320, 300);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
+            >
+              • 1. Encontro com Flowey
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_toriel_entrance', 320, 320);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
+            >
+              • 2. Entrada com Toriel
             </button>
             <button
               onClick={() => {
@@ -125,7 +145,7 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
             >
-              • Enigma dos Espinhos & Baú
+              • 3. Enigma de Espinhos
             </button>
             <button
               onClick={() => {
@@ -135,7 +155,7 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
             >
-              • Cruzamento (Toriel & Sans)
+              • 4. Cruzamento Monstros
             </button>
             <button
               onClick={() => {
@@ -145,7 +165,7 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
             >
-              • Portão da Corte Real
+              • 5. Portão dos Guardiões
             </button>
           </div>
         </div>

@@ -5,9 +5,9 @@ type StateListener = (stats: PlayerStats) => void;
 
 class GameStateManager {
   private stats: PlayerStats;
-  private currentRoom: string = 'ruins_entrance';
-  private playerPos = { x: 320, y: 340 };
-  private flags: Record<string, boolean> = {};
+  private currentRoom: string = 'room_awakening';
+  private playerPos = { x: 180, y: 260 };
+  private flags: Record<string, boolean> = { frisk_awoken: false };
   private listeners: Set<StateListener> = new Set();
 
   constructor() {
@@ -203,9 +203,9 @@ class GameStateManager {
 
   public resetGame() {
     this.stats = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATS));
-    this.currentRoom = 'ruins_entrance';
-    this.playerPos = { x: 320, y: 340 };
-    this.flags = {};
+    this.currentRoom = 'room_awakening';
+    this.playerPos = { x: 180, y: 260 };
+    this.flags = { frisk_awoken: false };
     localStorage.removeItem('undertale_save_data');
     this.notify();
   }

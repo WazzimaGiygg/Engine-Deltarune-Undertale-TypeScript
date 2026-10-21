@@ -7,6 +7,7 @@ export class SpriteGenerator {
     this.createEnemyTextures(scene);
     this.createTileTextures(scene);
     this.createBattleEffects(scene);
+    this.createDialoguePortraits(scene);
   }
 
   private static createPlayerTextures(scene: Phaser.Scene) {
@@ -100,6 +101,62 @@ export class SpriteGenerator {
       drawFrisk(`player_${dir}_0`, dir as 'down' | 'up' | 'left' | 'right', 0);
       drawFrisk(`player_${dir}_1`, dir as 'down' | 'up' | 'left' | 'right', 1);
     });
+
+    // Frisk fallen / sleeping on the golden flower bed
+    if (!scene.textures.exists('player_fallen')) {
+      const canvas = scene.textures.createCanvas('player_fallen', 48, 32);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+        const p = 2;
+
+        // Shadow under Frisk
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(24, 22, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hair (spread out slightly on the left/ground)
+        ctx.fillStyle = '#4a2c11';
+        ctx.fillRect(4 * p, 4 * p, 8 * p, 6 * p);
+        ctx.fillRect(2 * p, 5 * p, 3 * p, 4 * p);
+
+        // Face resting sideways
+        ctx.fillStyle = '#fcd0a1';
+        ctx.fillRect(8 * p, 5 * p, 5 * p, 5 * p);
+
+        // Peaceful closed eye (- -)
+        ctx.fillStyle = '#2c1e11';
+        ctx.fillRect(9 * p, 7 * p, 2 * p, 1 * p);
+        // Small mouth
+        ctx.fillRect(11 * p, 9 * p, 1 * p, 1 * p);
+
+        // Blue sweater (horizontal torso)
+        ctx.fillStyle = '#2980b9';
+        ctx.fillRect(12 * p, 5 * p, 7 * p, 5 * p);
+
+        // Magenta/purple sweater stripes
+        ctx.fillStyle = '#e056fd';
+        ctx.fillRect(14 * p, 5 * p, 1 * p, 5 * p);
+        ctx.fillRect(17 * p, 5 * p, 1 * p, 5 * p);
+
+        // Arm resting on the flowers
+        ctx.fillStyle = '#2980b9';
+        ctx.fillRect(11 * p, 9 * p, 4 * p, 2 * p);
+        ctx.fillStyle = '#fcd0a1'; // hand
+        ctx.fillRect(15 * p, 9 * p, 1 * p, 2 * p);
+
+        // Dark shorts
+        ctx.fillStyle = '#1b1464';
+        ctx.fillRect(18 * p, 6 * p, 3 * p, 4 * p);
+
+        // Legs / Brown Shoes tucked
+        ctx.fillStyle = '#5a3818';
+        ctx.fillRect(20 * p, 7 * p, 3 * p, 3 * p);
+
+        canvas.refresh();
+      }
+    }
   }
 
   private static createSoulTextures(scene: Phaser.Scene) {
@@ -291,6 +348,139 @@ export class SpriteGenerator {
         ctx.fillStyle = '#ecf0f1';
         ctx.fillRect(28, 72, 14, 14);
         ctx.fillRect(86, 72, 14, 14);
+
+        canvas.refresh();
+      }
+    }
+
+    // 4. Flowey the Flower (Friendly)
+    if (!scene.textures.exists('flowey_friendly')) {
+      const canvas = scene.textures.createCanvas('flowey_friendly', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Stem & Leaf
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(30, 42, 4, 20); // stem
+        ctx.fillRect(22, 50, 8, 4);  // left leaf
+        ctx.fillRect(18, 48, 6, 4);
+        ctx.fillRect(34, 52, 8, 4);  // right leaf
+        ctx.fillRect(40, 50, 6, 4);
+
+        // 6 Golden Petals
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(26, 6, 12, 14);  // Top
+        ctx.fillRect(26, 38, 12, 14); // Bottom
+        ctx.fillRect(8, 22, 14, 12);  // Left
+        ctx.fillRect(42, 22, 14, 12); // Right
+        ctx.fillRect(14, 12, 10, 10); // Top-left
+        ctx.fillRect(40, 12, 10, 10); // Top-right
+        ctx.fillRect(14, 34, 10, 10); // Bottom-left
+        ctx.fillRect(40, 34, 10, 10); // Bottom-right
+
+        // Center White Face
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(20, 18, 24, 22);
+        ctx.fillRect(18, 22, 28, 14);
+
+        // Cute smiling eyes & mouth (:3 / happy smile)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(24, 24, 3, 5); // Left eye
+        ctx.fillRect(37, 24, 3, 5); // Right eye
+
+        // Cute smile
+        ctx.fillRect(26, 33, 12, 2);
+        ctx.fillRect(25, 31, 2, 2);
+        ctx.fillRect(37, 31, 2, 2);
+
+        // Cheeks
+        ctx.fillStyle = '#ff7675';
+        ctx.fillRect(22, 28, 3, 2);
+        ctx.fillRect(39, 28, 3, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 5. Flowey the Flower (Sinister / Evil)
+    if (!scene.textures.exists('flowey_evil')) {
+      const canvas = scene.textures.createCanvas('flowey_evil', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Stem
+        ctx.fillStyle = '#1e8449';
+        ctx.fillRect(30, 42, 4, 20);
+
+        // Petals
+        ctx.fillStyle = '#f39c12';
+        ctx.fillRect(26, 6, 12, 14);
+        ctx.fillRect(26, 38, 12, 14);
+        ctx.fillRect(8, 22, 14, 12);
+        ctx.fillRect(42, 22, 14, 12);
+        ctx.fillRect(14, 12, 10, 10);
+        ctx.fillRect(40, 12, 10, 10);
+        ctx.fillRect(14, 34, 10, 10);
+        ctx.fillRect(40, 34, 10, 10);
+
+        // Face
+        ctx.fillStyle = '#ecf0f1';
+        ctx.fillRect(20, 18, 24, 22);
+        ctx.fillRect(18, 22, 28, 14);
+
+        // Creepy hollow eyes with white pinpricks
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(23, 22, 6, 8);
+        ctx.fillRect(35, 22, 6, 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(25, 25, 2, 2);
+        ctx.fillRect(37, 25, 2, 2);
+
+        // Sinister jagged wide mouth
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(22, 32, 20, 6);
+        ctx.fillRect(20, 30, 3, 3);
+        ctx.fillRect(41, 30, 3, 3);
+        // Sharp teeth
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(24, 32, 2, 3);
+        ctx.fillRect(28, 32, 2, 3);
+        ctx.fillRect(34, 32, 2, 3);
+        ctx.fillRect(38, 32, 2, 3);
+
+        canvas.refresh();
+      }
+    }
+
+    // 6. Flowey Scorched / Hurt
+    if (!scene.textures.exists('flowey_hurt')) {
+      const canvas = scene.textures.createCanvas('flowey_hurt', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Stem
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(30, 44, 4, 18);
+
+        // Wilting petals
+        ctx.fillStyle = '#d4ac0d';
+        ctx.fillRect(26, 10, 12, 10);
+        ctx.fillRect(26, 40, 12, 10);
+        ctx.fillRect(10, 24, 10, 10);
+        ctx.fillRect(44, 24, 10, 10);
+
+        // Face
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(20, 20, 24, 20);
+
+        // Dazed mouth 'O' and wide eyes
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(24, 24, 4, 4);
+        ctx.fillRect(36, 24, 4, 4);
+        ctx.fillRect(28, 32, 8, 6);
 
         canvas.refresh();
       }
@@ -513,6 +703,133 @@ export class SpriteGenerator {
         canvas.refresh();
       }
     }
+
+    // 11. Large Bed of Golden Flowers (Undertale Room 1)
+    if (!scene.textures.exists('prop_golden_flowerbed')) {
+      const canvas = scene.textures.createCanvas('prop_golden_flowerbed', 144, 84);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Ground shadow & soft dark soil
+        ctx.fillStyle = '#0f1f12';
+        ctx.beginPath();
+        ctx.ellipse(72, 44, 68, 38, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lush dark foliage base
+        ctx.fillStyle = '#1e3820';
+        ctx.beginPath();
+        ctx.ellipse(72, 42, 62, 34, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#2d5a27';
+        ctx.beginPath();
+        ctx.ellipse(72, 40, 56, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Clusters of golden buttercups
+        const flowerCoords = [
+          [72, 40], [60, 34], [84, 34], [52, 46], [92, 46],
+          [72, 26], [72, 54], [42, 38], [102, 38], [60, 22],
+          [84, 22], [58, 56], [86, 56], [32, 44], [112, 44],
+          [48, 28], [96, 28], [72, 16], [72, 64], [40, 52],
+          [104, 52], [24, 42], [120, 42], [50, 18], [94, 18],
+          [34, 32], [110, 32], [62, 64], [82, 64], [52, 62],
+          [92, 62], [28, 48], [116, 48], [66, 48], [78, 48]
+        ];
+
+        flowerCoords.forEach(([fx, fy]) => {
+          // Petals (cross / clover pattern)
+          ctx.fillStyle = '#d4ac0d';
+          ctx.fillRect(fx - 4, fy - 4, 8, 8);
+
+          ctx.fillStyle = '#f1c40f';
+          ctx.fillRect(fx - 5, fy - 2, 10, 4);
+          ctx.fillRect(fx - 2, fy - 5, 4, 10);
+
+          ctx.fillStyle = '#f9e79f';
+          ctx.fillRect(fx - 2, fy - 2, 4, 4);
+
+          // Orange pollen center
+          ctx.fillStyle = '#d35400';
+          ctx.fillRect(fx - 1, fy - 1, 2, 2);
+        });
+
+        // Loose petals scattered around the edges
+        const loosePetals = [
+          [12, 40], [18, 52], [16, 30], [128, 36], [124, 50],
+          [132, 42], [70, 72], [76, 74], [64, 10], [80, 10]
+        ];
+        ctx.fillStyle = '#f39c12';
+        loosePetals.forEach(([px, py]) => {
+          ctx.fillRect(px, py, 3, 2);
+          ctx.fillRect(px + 1, py + 1, 2, 2);
+        });
+
+        canvas.refresh();
+      }
+    }
+
+    // 12. Ancient Ruins Archway Door
+    if (!scene.textures.exists('prop_arch_door')) {
+      const canvas = scene.textures.createCanvas('prop_arch_door', 64, 96);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Dark portal interior void
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(10, 20, 44, 76);
+        ctx.beginPath();
+        ctx.ellipse(32, 24, 22, 16, 0, Math.PI, 0);
+        ctx.fill();
+
+        // Left Pillar
+        ctx.fillStyle = '#2d1b36';
+        ctx.fillRect(0, 16, 12, 80);
+        ctx.fillStyle = '#412252';
+        ctx.fillRect(2, 18, 8, 76);
+        ctx.fillStyle = '#5c2e73';
+        ctx.fillRect(2, 20, 3, 72);
+        // Pillar Base and Capital
+        ctx.fillStyle = '#5c2e73';
+        ctx.fillRect(0, 16, 14, 6);
+        ctx.fillRect(0, 90, 14, 6);
+
+        // Right Pillar
+        ctx.fillStyle = '#2d1b36';
+        ctx.fillRect(52, 16, 12, 80);
+        ctx.fillStyle = '#412252';
+        ctx.fillRect(54, 18, 8, 76);
+        ctx.fillStyle = '#5c2e73';
+        ctx.fillRect(54, 20, 3, 72);
+        // Pillar Base and Capital
+        ctx.fillStyle = '#5c2e73';
+        ctx.fillRect(50, 16, 14, 6);
+        ctx.fillRect(50, 90, 14, 6);
+
+        // Stone Arch Top
+        ctx.fillStyle = '#2d1b36';
+        ctx.fillRect(4, 0, 56, 18);
+        ctx.fillStyle = '#412252';
+        ctx.fillRect(6, 2, 52, 14);
+        ctx.fillStyle = '#5c2e73';
+        ctx.fillRect(8, 4, 48, 6);
+
+        // Center Keystone
+        ctx.fillStyle = '#7d3c98';
+        ctx.fillRect(28, 0, 8, 12);
+        ctx.fillStyle = '#9b59b6';
+        ctx.fillRect(30, 2, 4, 8);
+
+        // Carved rune symbol on lintel
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(31, 14, 2, 2);
+
+        canvas.refresh();
+      }
+    }
   }
 
   private static createBattleEffects(scene: Phaser.Scene) {
@@ -617,6 +934,508 @@ export class SpriteGenerator {
         // Center sweet spot
         ctx.fillStyle = '#00ffff';
         ctx.fillRect(226, 8, 8, 94);
+        canvas.refresh();
+      }
+    }
+
+    // 7. Flowey's Friendliness Pellets (white seeds)
+    if (!scene.textures.exists('bullet_pellet')) {
+      const canvas = scene.textures.createCanvas('bullet_pellet', 12, 12);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(4, 2, 4, 8);
+        ctx.fillRect(2, 4, 8, 4);
+        ctx.fillStyle = '#dfe6e9';
+        ctx.fillRect(4, 4, 4, 4);
+        canvas.refresh();
+      }
+    }
+
+    // 8. Toriel's Rescue Fireball
+    if (!scene.textures.exists('fx_fireball')) {
+      const canvas = scene.textures.createCanvas('fx_fireball', 28, 28);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.fillStyle = '#e67e22';
+        ctx.beginPath();
+        ctx.arc(14, 14, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(14, 14, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(14, 14, 4, 0, Math.PI * 2);
+        ctx.fill();
+        canvas.refresh();
+      }
+    }
+  }
+
+  private static createDialoguePortraits(scene: Phaser.Scene) {
+    // 1. Flowey Happy Portrait (64x64)
+    if (!scene.textures.exists('portrait_flowey_happy')) {
+      const canvas = scene.textures.createCanvas('portrait_flowey_happy', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Petals
+        ctx.fillStyle = '#f1c40f';
+        const petalCoords = [
+          [32, 10], [47, 17], [54, 32], [47, 47],
+          [32, 54], [17, 47], [10, 32], [17, 17]
+        ];
+        petalCoords.forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, 10, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        ctx.fillStyle = '#f39c12';
+        petalCoords.forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Face circle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 32, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(25, 26, 4, 6);
+        ctx.fillRect(35, 26, 4, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(26, 27, 2, 2);
+        ctx.fillRect(36, 27, 2, 2);
+
+        // Smile
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(32, 34, 7, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+
+        // Cheeks
+        ctx.fillStyle = '#ff7675';
+        ctx.fillRect(22, 35, 3, 2);
+        ctx.fillRect(39, 35, 3, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 2. Flowey Wink Portrait (64x64)
+    if (!scene.textures.exists('portrait_flowey_wink')) {
+      const canvas = scene.textures.createCanvas('portrait_flowey_wink', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Petals
+        ctx.fillStyle = '#f1c40f';
+        const petalCoords = [
+          [32, 10], [47, 17], [54, 32], [47, 47],
+          [32, 54], [17, 47], [10, 32], [17, 17]
+        ];
+        petalCoords.forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, 10, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.fillStyle = '#f39c12';
+        petalCoords.forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Face
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 32, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Left eye open
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(25, 26, 4, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(26, 27, 2, 2);
+
+        // Right eye winking ^
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(34, 30);
+        ctx.lineTo(38, 27);
+        ctx.lineTo(42, 30);
+        ctx.stroke();
+
+        // Smile
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(32, 34, 7, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff7675';
+        ctx.fillRect(22, 35, 3, 2);
+        ctx.fillRect(39, 35, 3, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 3. Flowey Evil Portrait (64x64)
+    if (!scene.textures.exists('portrait_flowey_evil')) {
+      const canvas = scene.textures.createCanvas('portrait_flowey_evil', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Twisted dark petals
+        ctx.fillStyle = '#b7950b';
+        const petalCoords = [
+          [32, 8], [49, 15], [56, 32], [49, 49],
+          [32, 56], [15, 49], [8, 32], [15, 15]
+        ];
+        petalCoords.forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(px, py, 9, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Face pale ghastly
+        ctx.fillStyle = '#f5f6fa';
+        ctx.beginPath();
+        ctx.arc(32, 32, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Black hollow sockets with tiny white dots
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(22, 23, 7, 9);
+        ctx.fillRect(35, 23, 7, 9);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(25, 27, 2, 2);
+        ctx.fillRect(38, 27, 2, 2);
+
+        // Twisted demonic grin with sharp teeth
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(32, 34, 11, 0, Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        for (let t = 24; t <= 40; t += 4) {
+          ctx.fillRect(t, 34, 2, 4);
+          ctx.fillRect(t + 1, 38, 2, 4);
+        }
+
+        canvas.refresh();
+      }
+    }
+
+    // 4. Toriel Normal Portrait (64x64)
+    if (!scene.textures.exists('portrait_toriel_normal')) {
+      const canvas = scene.textures.createCanvas('portrait_toriel_normal', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Goat ears drooping down
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(10, 22, 10, 26);
+        ctx.fillRect(44, 22, 10, 26);
+        ctx.fillStyle = '#fab1a0';
+        ctx.fillRect(13, 26, 4, 18);
+        ctx.fillRect(47, 26, 4, 18);
+
+        // Small curved horns
+        ctx.fillStyle = '#dcdde1';
+        ctx.beginPath();
+        ctx.moveTo(22, 18);
+        ctx.lineTo(20, 8);
+        ctx.lineTo(26, 14);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(42, 18);
+        ctx.lineTo(44, 8);
+        ctx.lineTo(38, 14);
+        ctx.fill();
+
+        // Head fur
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 30, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(22, 30, 20, 18);
+
+        // Caring eyes
+        ctx.fillStyle = '#833471';
+        ctx.fillRect(24, 26, 4, 6);
+        ctx.fillRect(36, 26, 4, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(25, 27, 2, 2);
+        ctx.fillRect(37, 27, 2, 2);
+
+        // Snout & mouth
+        ctx.fillStyle = '#2d3436';
+        ctx.fillRect(30, 36, 4, 2);
+        ctx.fillRect(31, 38, 2, 3);
+        ctx.fillRect(28, 41, 8, 2);
+
+        // Fangs
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(27, 39, 2, 2);
+        ctx.fillRect(35, 39, 2, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 5. Toriel Warm Smiling Portrait (64x64)
+    if (!scene.textures.exists('portrait_toriel_warm')) {
+      const canvas = scene.textures.createCanvas('portrait_toriel_warm', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Ears
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(10, 22, 10, 26);
+        ctx.fillRect(44, 22, 10, 26);
+        ctx.fillStyle = '#fab1a0';
+        ctx.fillRect(13, 26, 4, 18);
+        ctx.fillRect(47, 26, 4, 18);
+
+        // Horns
+        ctx.fillStyle = '#dcdde1';
+        ctx.beginPath();
+        ctx.moveTo(22, 18);
+        ctx.lineTo(20, 8);
+        ctx.lineTo(26, 14);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(42, 18);
+        ctx.lineTo(44, 8);
+        ctx.lineTo(38, 14);
+        ctx.fill();
+
+        // Head fur
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 30, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(22, 30, 20, 18);
+
+        // Motherly closed eye smile ^ ^
+        ctx.strokeStyle = '#2d3436';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(22, 29);
+        ctx.lineTo(26, 25);
+        ctx.lineTo(30, 29);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(34, 29);
+        ctx.lineTo(38, 25);
+        ctx.lineTo(42, 29);
+        ctx.stroke();
+
+        // Cheeks blush
+        ctx.fillStyle = '#ff7675';
+        ctx.fillRect(19, 33, 4, 3);
+        ctx.fillRect(41, 33, 4, 3);
+
+        // Snout & warm smile
+        ctx.fillStyle = '#2d3436';
+        ctx.fillRect(30, 36, 4, 2);
+        ctx.fillRect(31, 38, 2, 3);
+        ctx.fillRect(27, 41, 10, 2);
+
+        // Fangs
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(27, 39, 2, 2);
+        ctx.fillRect(35, 39, 2, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 6. Sans Normal Portrait (64x64)
+    if (!scene.textures.exists('portrait_sans_normal')) {
+      const canvas = scene.textures.createCanvas('portrait_sans_normal', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Round skull
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 28, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(20, 30, 24, 18);
+
+        // Hollow sockets with pupils
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(20, 22, 9, 12);
+        ctx.fillRect(35, 22, 9, 12);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(24, 26, 3, 3);
+        ctx.fillRect(37, 26, 3, 3);
+
+        // Nose
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(32, 33);
+        ctx.lineTo(30, 37);
+        ctx.lineTo(34, 37);
+        ctx.fill();
+
+        // Toothy grin
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(18, 41, 28, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(19, 42, 26, 4);
+        ctx.fillStyle = '#000000';
+        for (let tx = 23; tx <= 43; tx += 4) {
+          ctx.fillRect(tx, 41, 1, 6);
+        }
+
+        canvas.refresh();
+      }
+    }
+
+    // 7. Sans Wink Portrait (64x64)
+    if (!scene.textures.exists('portrait_sans_wink')) {
+      const canvas = scene.textures.createCanvas('portrait_sans_wink', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 28, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(20, 30, 24, 18);
+
+        // Left socket open
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(20, 22, 9, 12);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(24, 26, 3, 3);
+
+        // Right eye winking line
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(35, 28);
+        ctx.lineTo(44, 28);
+        ctx.stroke();
+
+        // Nose
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(32, 33);
+        ctx.lineTo(30, 37);
+        ctx.lineTo(34, 37);
+        ctx.fill();
+
+        // Grin
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(18, 41, 28, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(19, 42, 26, 4);
+        ctx.fillStyle = '#000000';
+        for (let tx = 23; tx <= 43; tx += 4) {
+          ctx.fillRect(tx, 41, 1, 6);
+        }
+
+        canvas.refresh();
+      }
+    }
+
+    // 8. Froggit Portrait (64x64)
+    if (!scene.textures.exists('portrait_froggit')) {
+      const canvas = scene.textures.createCanvas('portrait_froggit', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 64, 64);
+
+        // Body
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(32, 36, 24, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spots
+        ctx.fillStyle = '#bdc3c7';
+        ctx.beginPath();
+        ctx.arc(22, 40, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(42, 38, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye bumps
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(20, 22, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(44, 22, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(20, 22, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(44, 22, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(19, 20, 2, 2);
+        ctx.fillRect(43, 20, 2, 2);
+
+        // Mouth
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(26, 44, 12, 2);
+
         canvas.refresh();
       }
     }

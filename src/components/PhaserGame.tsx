@@ -1,14 +1,23 @@
 import Phaser from 'phaser';
 import React, { useEffect, useRef } from 'react';
 import { BattleScene } from '../engine/scenes/BattleScene';
+import { FloweyBattleScene } from '../engine/scenes/FloweyBattleScene';
+import { GameOverScene } from '../engine/scenes/GameOverScene';
+import { IntroScene } from '../engine/scenes/IntroScene';
 import { OverworldScene } from '../engine/scenes/OverworldScene';
+import { TitleScene } from '../engine/scenes/TitleScene';
 
 interface PhaserGameProps {
   onOpenMenu: () => void;
+  onDeveloperUnlocked: () => void;
   gameRefCallback?: (game: Phaser.Game | null) => void;
 }
 
-export const PhaserGame: React.FC<PhaserGameProps> = ({ onOpenMenu, gameRefCallback }) => {
+export const PhaserGame: React.FC<PhaserGameProps> = ({
+  onOpenMenu,
+  onDeveloperUnlocked,
+  gameRefCallback,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameInstanceRef = useRef<Phaser.Game | null>(null);
 
@@ -33,7 +42,7 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ onOpenMenu, gameRefCallb
           debug: false,
         },
       },
-      scene: [OverworldScene, BattleScene],
+      scene: [IntroScene, TitleScene, OverworldScene, BattleScene, FloweyBattleScene, GameOverScene],
     };
 
     const game = new Phaser.Game(config);
@@ -44,12 +53,16 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({ onOpenMenu, gameRefCallb
       onOpenMenu();
     });
 
+    game.events.on('developer_mode_unlocked', () => {
+      onDeveloperUnlocked();
+    });
+
     return () => {
       game.destroy(true);
       gameInstanceRef.current = null;
       if (gameRefCallback) gameRefCallback(null);
     };
-  }, [onOpenMenu, gameRefCallback]);
+  }, [onOpenMenu, onDeveloperUnlocked, gameRefCallback]);
 
   return (
     <div className="relative w-full flex items-center justify-center bg-black">

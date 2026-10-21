@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { soundManager } from '../services/soundSynthesizer';
 
 interface VirtualControllerProps {
@@ -6,27 +6,51 @@ interface VirtualControllerProps {
 }
 
 export const VirtualController: React.FC<VirtualControllerProps> = ({ onAction }) => {
-  const triggerKey = (code: string, keyName: string) => {
+  const [activeKeys, setActiveKeys] = useState<Record<string, boolean>>({});
+
+  const pressKey = (code: string, keyName: string, actionName: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'Z' | 'X' | 'C') => {
+    setActiveKeys((prev) => ({ ...prev, [actionName]: true }));
     window.dispatchEvent(new KeyboardEvent('keydown', { key: keyName, code }));
+    onAction(actionName);
   };
 
-  const releaseKey = (code: string, keyName: string) => {
+  const releaseKey = (code: string, keyName: string, actionName: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'Z' | 'X' | 'C') => {
+    setActiveKeys((prev) => ({ ...prev, [actionName]: false }));
     window.dispatchEvent(new KeyboardEvent('keyup', { key: keyName, code }));
   };
 
+  const createTouchHandlers = (code: string, keyName: string, actionName: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'Z' | 'X' | 'C') => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault();
+      pressKey(code, keyName, actionName);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      e.preventDefault();
+      releaseKey(code, keyName, actionName);
+    },
+    onPointerLeave: (e: React.PointerEvent) => {
+      e.preventDefault();
+      releaseKey(code, keyName, actionName);
+    },
+    onPointerCancel: (e: React.PointerEvent) => {
+      e.preventDefault();
+      releaseKey(code, keyName, actionName);
+    },
+  });
+
   return (
-    <div className="w-full max-w-xl mx-auto flex items-center justify-between px-4 py-3 bg-neutral-950/80 border border-neutral-800 rounded-lg select-none">
+    <div className="w-full max-w-xl mx-auto flex items-center justify-between px-3 py-2 bg-neutral-950/90 border border-neutral-800 rounded-lg select-none touch-none">
       {/* Directional Pad */}
-      <div className="relative w-32 h-32 flex items-center justify-center">
+      <div className="relative w-36 h-36 flex items-center justify-center">
         {/* UP */}
         <button
           aria-label="Cima"
-          onPointerDown={() => {
-            triggerKey('ArrowUp', 'ArrowUp');
-            onAction('UP');
-          }}
-          onPointerUp={() => releaseKey('ArrowUp', 'ArrowUp')}
-          className="absolute top-0 w-10 h-10 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-white rounded font-pixel text-xs flex items-center justify-center border border-neutral-600 shadow"
+          {...createTouchHandlers('ArrowUp', 'ArrowUp', 'UP')}
+          className={`absolute top-0 w-11 h-11 rounded font-pixel text-xs flex items-center justify-center border shadow transition-colors active:scale-95 ${
+            activeKeys.UP
+              ? 'bg-yellow-400 text-black border-yellow-200'
+              : 'bg-neutral-800 text-white border-neutral-600 hover:bg-neutral-700'
+          }`}
         >
           ▲
         </button>
@@ -34,30 +58,30 @@ export const VirtualController: React.FC<VirtualControllerProps> = ({ onAction }
         {/* LEFT */}
         <button
           aria-label="Esquerda"
-          onPointerDown={() => {
-            triggerKey('ArrowLeft', 'ArrowLeft');
-            onAction('LEFT');
-          }}
-          onPointerUp={() => releaseKey('ArrowLeft', 'ArrowLeft')}
-          className="absolute left-0 w-10 h-10 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-white rounded font-pixel text-xs flex items-center justify-center border border-neutral-600 shadow"
+          {...createTouchHandlers('ArrowLeft', 'ArrowLeft', 'LEFT')}
+          className={`absolute left-0 w-11 h-11 rounded font-pixel text-xs flex items-center justify-center border shadow transition-colors active:scale-95 ${
+            activeKeys.LEFT
+              ? 'bg-yellow-400 text-black border-yellow-200'
+              : 'bg-neutral-800 text-white border-neutral-600 hover:bg-neutral-700'
+          }`}
         >
           ◀
         </button>
 
         {/* CENTER PIVOT */}
-        <div className="w-8 h-8 bg-neutral-900 rounded-full border border-neutral-700 flex items-center justify-center">
-          <div className="w-3 h-3 bg-red-600 rounded-full" />
+        <div className="w-9 h-9 bg-neutral-900 rounded-full border border-neutral-700 flex items-center justify-center pointer-events-none">
+          <div className="w-3.5 h-3.5 bg-red-600 rounded-full" />
         </div>
 
         {/* RIGHT */}
         <button
           aria-label="Direita"
-          onPointerDown={() => {
-            triggerKey('ArrowRight', 'ArrowRight');
-            onAction('RIGHT');
-          }}
-          onPointerUp={() => releaseKey('ArrowRight', 'ArrowRight')}
-          className="absolute right-0 w-10 h-10 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-white rounded font-pixel text-xs flex items-center justify-center border border-neutral-600 shadow"
+          {...createTouchHandlers('ArrowRight', 'ArrowRight', 'RIGHT')}
+          className={`absolute right-0 w-11 h-11 rounded font-pixel text-xs flex items-center justify-center border shadow transition-colors active:scale-95 ${
+            activeKeys.RIGHT
+              ? 'bg-yellow-400 text-black border-yellow-200'
+              : 'bg-neutral-800 text-white border-neutral-600 hover:bg-neutral-700'
+          }`}
         >
           ▶
         </button>
@@ -65,63 +89,65 @@ export const VirtualController: React.FC<VirtualControllerProps> = ({ onAction }
         {/* DOWN */}
         <button
           aria-label="Baixo"
-          onPointerDown={() => {
-            triggerKey('ArrowDown', 'ArrowDown');
-            onAction('DOWN');
-          }}
-          onPointerUp={() => releaseKey('ArrowDown', 'ArrowDown')}
-          className="absolute bottom-0 w-10 h-10 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-600 text-white rounded font-pixel text-xs flex items-center justify-center border border-neutral-600 shadow"
+          {...createTouchHandlers('ArrowDown', 'ArrowDown', 'DOWN')}
+          className={`absolute bottom-0 w-11 h-11 rounded font-pixel text-xs flex items-center justify-center border shadow transition-colors active:scale-95 ${
+            activeKeys.DOWN
+              ? 'bg-yellow-400 text-black border-yellow-200'
+              : 'bg-neutral-800 text-white border-neutral-600 hover:bg-neutral-700'
+          }`}
         >
           ▼
         </button>
       </div>
 
       {/* Action Buttons: [Z] Confirm/Act, [X] Cancel/Run, [C] Menu */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3.5">
         {/* [Z] Button */}
         <div className="flex flex-col items-center">
           <button
-            onPointerDown={() => {
-              triggerKey('KeyZ', 'z');
-              onAction('Z');
-            }}
-            onPointerUp={() => releaseKey('KeyZ', 'z')}
-            className="w-12 h-12 rounded-full bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 text-black font-pixel font-bold text-sm flex items-center justify-center border-2 border-yellow-300 shadow-lg cursor-pointer"
+            aria-label="Ação Z Confirmar"
+            {...createTouchHandlers('KeyZ', 'z', 'Z')}
+            className={`w-13 h-13 rounded-full font-pixel font-bold text-sm flex items-center justify-center border-2 shadow-lg transition-transform active:scale-90 cursor-pointer ${
+              activeKeys.Z
+                ? 'bg-yellow-300 text-black border-white scale-95'
+                : 'bg-yellow-500 text-black border-yellow-300 hover:bg-yellow-400'
+            }`}
           >
             Z
           </button>
-          <span className="text-[9px] text-neutral-400 font-pixel mt-1">CONFIRMAR</span>
+          <span className="text-[8px] text-neutral-400 font-pixel mt-1">AGIR / OK</span>
         </div>
 
         {/* [X] Button */}
         <div className="flex flex-col items-center">
           <button
-            onPointerDown={() => {
-              triggerKey('KeyX', 'x');
-              onAction('X');
-            }}
-            onPointerUp={() => releaseKey('KeyX', 'x')}
-            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-pixel font-bold text-sm flex items-center justify-center border-2 border-blue-400 shadow-lg cursor-pointer"
+            aria-label="Ação X Cancelar"
+            {...createTouchHandlers('KeyX', 'x', 'X')}
+            className={`w-13 h-13 rounded-full font-pixel font-bold text-sm flex items-center justify-center border-2 shadow-lg transition-transform active:scale-90 cursor-pointer ${
+              activeKeys.X
+                ? 'bg-blue-400 text-white border-white scale-95'
+                : 'bg-blue-600 text-white border-blue-400 hover:bg-blue-500'
+            }`}
           >
             X
           </button>
-          <span className="text-[9px] text-neutral-400 font-pixel mt-1">CANCELAR</span>
+          <span className="text-[8px] text-neutral-400 font-pixel mt-1">VOLTAR</span>
         </div>
 
         {/* [C] Button */}
         <div className="flex flex-col items-center">
           <button
-            onPointerDown={() => {
-              triggerKey('KeyC', 'c');
-              onAction('C');
-              soundManager.playMenuSelect();
-            }}
-            onPointerUp={() => releaseKey('KeyC', 'c')}
-            className="w-12 h-12 rounded-full bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-800 text-neutral-200 font-pixel font-bold text-sm flex items-center justify-center border-2 border-neutral-500 shadow-lg cursor-pointer"
+            aria-label="Menu C"
+            {...createTouchHandlers('KeyC', 'c', 'C')}
+            className={`w-13 h-13 rounded-full font-pixel font-bold text-sm flex items-center justify-center border-2 shadow-lg transition-transform active:scale-90 cursor-pointer ${
+              activeKeys.C
+                ? 'bg-neutral-500 text-white border-white scale-95'
+                : 'bg-neutral-700 text-neutral-200 border-neutral-500 hover:bg-neutral-600'
+            }`}
           >
             C
           </button>
-          <span className="text-[9px] text-neutral-400 font-pixel mt-1">MENU</span>
+          <span className="text-[8px] text-neutral-400 font-pixel mt-1">MENU</span>
         </div>
       </div>
     </div>
