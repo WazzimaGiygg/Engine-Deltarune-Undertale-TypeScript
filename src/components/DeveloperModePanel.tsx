@@ -11,6 +11,7 @@ interface DeveloperModePanelProps {
   stats: PlayerStats;
   onSelectBattle: (enemyId: string) => void;
   onWarpRoom: (roomId: string, x: number, y: number) => void;
+  onReloadGameState?: () => void;
 }
 
 export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
@@ -19,6 +20,7 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
   stats,
   onSelectBattle,
   onWarpRoom,
+  onReloadGameState,
 }) => {
   const [customHp, setCustomHp] = useState(stats.hp);
   const [customAtk, setCustomAtk] = useState(stats.atk);
@@ -247,6 +249,34 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
             >
               Aplicar ao Motor
             </button>
+
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => {
+                  gameState.saveGame();
+                  soundManager.playSave();
+                  setDevMessage('* Progresso salvo no localStorage via motor de Save!');
+                }}
+                className="flex-1 py-1.5 border border-yellow-500 bg-neutral-900 text-yellow-300 font-bold text-[10px] hover:bg-neutral-800 transition-colors"
+              >
+                ★ Salvar Jogo
+              </button>
+              <button
+                onClick={() => {
+                  const ok = gameState.loadFromStorage();
+                  if (ok) {
+                    soundManager.playSave();
+                    onReloadGameState?.();
+                    setDevMessage('* Save carregado com sucesso do localStorage!');
+                  } else {
+                    setDevMessage('* Nenhum arquivo salvo encontrado no armazenamento.');
+                  }
+                }}
+                className="flex-1 py-1.5 border border-neutral-700 bg-neutral-900 text-neutral-300 font-bold text-[10px] hover:bg-neutral-800 transition-colors"
+              >
+                Carregar Save
+              </button>
+            </div>
           </div>
 
           {/* Section 3: Teleporte de Cenários */}
@@ -282,7 +312,25 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
               >
-                2. Portão da Toriel
+                2. Entrada das Ruínas
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('ruins_switch_chamber', 320, 320);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
+              >
+                3. Sala Interruptores
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('ruins_dummy_room', 320, 320);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
+              >
+                4. Sala do Manequim
               </button>
               <button
                 onClick={() => {
@@ -291,7 +339,7 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px]"
               >
-                3. Enigma de Espinhos
+                5. Enigma de Espinhos
               </button>
               <button
                 onClick={() => {
@@ -300,7 +348,7 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px]"
               >
-                4. Cruzamento Monstros
+                6. Cruzamento Monstros
               </button>
               <button
                 onClick={() => {
@@ -309,7 +357,23 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px]"
               >
-                5. Portão dos Guardiões
+                7. Portão dos Guardiões
+              </button>
+            </div>
+
+            <div className="mt-2.5 pt-2 border-t border-neutral-850">
+              <button
+                onClick={() => {
+                  gameState.setFlag('flowey_met', false);
+                  gameState.setFlag('frisk_awoken', true);
+                  soundManager.playSave();
+                  onWarpRoom('room_flowey', 110, 240);
+                  setDevMessage('* Flag "flowey_met" resetada! Cutscene de Flowey reativada.');
+                  onClose();
+                }}
+                className="w-full py-1.5 border border-yellow-600/60 bg-yellow-950/40 hover:bg-yellow-900/60 text-yellow-300 font-bold text-[9px] transition-colors"
+              >
+                ↺ Resetar e Rejogar Encontro com Flowey
               </button>
             </div>
           </div>

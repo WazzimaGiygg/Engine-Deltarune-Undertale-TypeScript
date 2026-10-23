@@ -1056,6 +1056,8 @@ export class BattleScene extends Phaser.Scene {
     });
 
     gameState.recordVictory(false);
+    gameState.setFlag(`enemy_defeated_${this.enemyData.id}`, true);
+    gameState.setFlag(`enemy_resolved_${this.enemyData.id}`, true);
     const rewards = gameState.addRewards(this.enemyData.expReward, this.enemyData.goldReward);
     this.refreshHUD();
 
@@ -1077,6 +1079,8 @@ export class BattleScene extends Phaser.Scene {
     this.isInputLocked = true;
     soundManager.playSpare();
     gameState.recordVictory(true);
+    gameState.setFlag(`enemy_spared_${this.enemyData.id}`, true);
+    gameState.setFlag(`enemy_resolved_${this.enemyData.id}`, true);
     gameState.addRewards(0, this.enemyData.goldReward);
     this.refreshHUD();
 

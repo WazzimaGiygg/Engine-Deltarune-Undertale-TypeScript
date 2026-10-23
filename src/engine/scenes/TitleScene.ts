@@ -40,41 +40,92 @@ export class TitleScene extends Phaser.Scene {
     });
     subtitle.setOrigin(0.5);
 
-    // Save info preview
-    const hasSave = gameState.loadFromStorage();
-    const stats = gameState.getStats();
+    // Save info preview and classic Undertale Save Slot
+    const hasSave = gameState.hasSavedGame();
+    const lastSave = hasSave ? gameState.getLastSavedData() : null;
 
-    this.options = [
-      {
-        label: 'NOVO JOGO',
-        action: () => {
-          gameState.resetGame();
-          this.startGame();
-        },
-      },
-    ];
+    let startY = 240;
 
-    if (hasSave) {
-      this.options.unshift({
-        label: `CONTINUAR (${stats.name} - LV ${stats.lv})`,
-        action: () => {
-          gameState.loadFromStorage();
-          this.startGame();
-        },
+    if (hasSave && lastSave) {
+      // Classic Undertale Save Preview Card
+      const card = this.add.graphics();
+      card.fillStyle(0x000000, 1);
+      card.lineStyle(3, 0xffffff, 1);
+      card.fillRect(130, 175, 380, 68);
+      card.strokeRect(130, 175, 380, 68);
+
+      const mins = Math.floor((lastSave.playtimeSeconds || 0) / 60);
+      const secs = (lastSave.playtimeSeconds || 0) % 60;
+      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+
+      this.add.text(145, 188, lastSave.stats.name.toUpperCase(), {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '11px',
+        color: '#ffffff',
       });
-    }
+      this.add.text(285, 188, `LV ${lastSave.stats.lv}`, {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '11px',
+        color: '#ffffff',
+      });
+      this.add.text(420, 188, `${pad(mins)}:${pad(secs)}`, {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '11px',
+        color: '#ffffff',
+      });
+      this.add.text(145, 216, lastSave.roomName || 'Ruínas - Entrada', {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '10px',
+        color: '#ffff00',
+      });
 
-    this.options.push({
-      label: 'HISTÓRIA / PRÓLOGO',
-      action: () => {
-        this.scene.start('IntroScene');
-      },
-    });
+      this.options = [
+        {
+          label: 'CONTINUAR',
+          action: () => {
+            soundManager.playSave();
+            gameState.loadFromStorage();
+            this.startGame();
+          },
+        },
+        {
+          label: 'REINICIAR (NOVO JOGO)',
+          action: () => {
+            gameState.resetGame();
+            this.startGame();
+          },
+        },
+        {
+          label: 'HISTÓRIA / PRÓLOGO',
+          action: () => {
+            this.scene.start('IntroScene');
+          },
+        },
+      ];
+      startY = 275;
+    } else {
+      this.options = [
+        {
+          label: 'INICIAR NOVO JOGO',
+          action: () => {
+            gameState.resetGame();
+            this.startGame();
+          },
+        },
+        {
+          label: 'HISTÓRIA / PRÓLOGO',
+          action: () => {
+            this.scene.start('IntroScene');
+          },
+        },
+      ];
+      startY = 240;
+    }
 
     // Render options
     this.optionTexts = [];
     this.options.forEach((opt, idx) => {
-      const txt = this.add.text(320, 240 + idx * 45, opt.label, {
+      const txt = this.add.text(320, startY + idx * 42, opt.label, {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '12px',
         color: idx === 0 ? '#ffff00' : '#ffffff',
@@ -90,7 +141,7 @@ export class TitleScene extends Phaser.Scene {
     });
 
     // Soul Cursor
-    this.soulCursor = this.add.sprite(200, 240, 'soul_red');
+    this.soulCursor = this.add.sprite(200, startY, 'soul_red');
     this.soulCursor.setScale(1.2);
     this.updateCursor();
 

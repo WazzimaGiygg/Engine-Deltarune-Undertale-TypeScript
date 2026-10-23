@@ -9,6 +9,9 @@ class GameStateManager {
   private playerPos = { x: 180, y: 260 };
   private flags: Record<string, boolean> = { frisk_awoken: false };
   private listeners: Set<StateListener> = new Set();
+  private sessionStartTime: number = Date.now();
+  private savedPlaytimeSeconds: number = 0;
+  private currentRoomName: string = 'Ruínas - Entrada';
 
   constructor() {
     this.stats = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATS));
@@ -23,10 +26,49 @@ class GameStateManager {
     return this.currentRoom;
   }
 
-  public setCurrentRoom(room: string, x?: number, y?: number) {
+  public getCurrentRoomName(): string {
+    return this.currentRoomName;
+  }
+
+  public setCurrentRoomName(name: string) {
+    this.currentRoomName = name;
+  }
+
+  public setCurrentRoom(room: string, x?: number, y?: number, roomName?: string) {
     this.currentRoom = room;
+    if (roomName) {
+      this.currentRoomName = roomName;
+    }
     if (x !== undefined && y !== undefined) {
       this.playerPos = { x, y };
+    }
+  }
+
+  public getPlaytimeSeconds(): number {
+    const elapsedSession = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+    return Math.max(0, this.savedPlaytimeSeconds + elapsedSession);
+  }
+
+  public getFormattedPlaytime(): string {
+    const total = this.getPlaytimeSeconds();
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    if (mins >= 60) {
+      const hrs = Math.floor(mins / 60);
+      const remMins = mins % 60;
+      return `${hrs}:${pad(remMins)}:${pad(secs)}`;
+    }
+    return `${pad(mins)}:${pad(secs)}`;
+  }
+
+  public getLastSavedData(): GameSaveData | null {
+    try {
+      const raw = localStorage.getItem('undertale_save_data');
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
     }
   }
 
@@ -42,8 +84,13 @@ class GameStateManager {
     return !!this.flags[key];
   }
 
+  public getAllFlags(): Record<string, boolean> {
+    return { ...this.flags };
+  }
+
   public setFlag(key: string, value: boolean) {
     this.flags[key] = value;
+    this.notify();
   }
 
   public subscribe(fn: StateListener): () => void {
@@ -156,6 +203,11 @@ class GameStateManager {
     return { leveledUp, newLv: leveledUp ? this.stats.lv : undefined };
   }
 
+  public addGold(amount: number) {
+    this.stats.gold += amount;
+    this.notify();
+  }
+
   public recordVictory(isSpare: boolean) {
     if (isSpare) {
       this.stats.spares += 1;
@@ -166,16 +218,29 @@ class GameStateManager {
   }
 
   // Save / Load via LocalStorage
-  public saveGame(): boolean {
+  public saveGame(roomName?: string): boolean {
     try {
+      this.flags['game_saved_at_least_once'] = true;
+      if (roomName) {
+        this.currentRoomName = roomName;
+      }
+      this.restoreFullHp();
+
+      const totalPlaytime = this.getPlaytimeSeconds();
+      this.savedPlaytimeSeconds = totalPlaytime;
+      this.sessionStartTime = Date.now();
+
       const data: GameSaveData = {
         stats: this.stats,
         currentRoom: this.currentRoom,
+        roomName: this.currentRoomName,
         playerPos: this.playerPos,
         flags: this.flags,
         timestamp: Date.now(),
+        playtimeSeconds: totalPlaytime,
       };
       localStorage.setItem('undertale_save_data', JSON.stringify(data));
+      this.notify();
       return true;
     } catch {
       return false;
@@ -190,8 +255,11 @@ class GameStateManager {
       if (data && data.stats) {
         this.stats = data.stats;
         this.currentRoom = data.currentRoom || 'ruins_entrance';
+        this.currentRoomName = data.roomName || 'Ruínas - Entrada';
         this.playerPos = data.playerPos || { x: 320, y: 340 };
         this.flags = data.flags || {};
+        this.savedPlaytimeSeconds = data.playtimeSeconds || 0;
+        this.sessionStartTime = Date.now();
         this.notify();
         return true;
       }
@@ -201,11 +269,54 @@ class GameStateManager {
     return false;
   }
 
+  public hasSavedGame(): boolean {
+    try {
+      const raw = localStorage.getItem('undertale_save_data');
+      if (!raw) return false;
+      const data: GameSaveData = JSON.parse(raw);
+      return Boolean(data && data.stats && data.stats.name && data.currentRoom);
+    } catch {
+      return false;
+    }
+  }
+
+  public deleteSave(): boolean {
+    try {
+      localStorage.removeItem('undertale_save_data');
+      this.notify();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  public exportSaveAsJson(): string | null {
+    try {
+      return localStorage.getItem('undertale_save_data');
+    } catch {
+      return null;
+    }
+  }
+
+  public importSaveFromJson(jsonString: string): boolean {
+    try {
+      const data: GameSaveData = JSON.parse(jsonString);
+      if (!data || !data.stats || !data.currentRoom) return false;
+      localStorage.setItem('undertale_save_data', JSON.stringify(data));
+      return this.loadFromStorage();
+    } catch {
+      return false;
+    }
+  }
+
   public resetGame() {
     this.stats = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATS));
     this.currentRoom = 'room_awakening';
+    this.currentRoomName = 'Ruínas - Despertar';
     this.playerPos = { x: 180, y: 260 };
     this.flags = { frisk_awoken: false };
+    this.savedPlaytimeSeconds = 0;
+    this.sessionStartTime = Date.now();
     localStorage.removeItem('undertale_save_data');
     this.notify();
   }

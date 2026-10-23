@@ -54,7 +54,6 @@
       }
     ],
     "onComplete": {
-      "setFlag": "flowey_met",
       "startScene": "FloweyBattleScene"
     }
   },
@@ -134,6 +133,207 @@
         "text": "* Estarei logo à frente certificando-me de que o caminho é seguro para você.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
+      }
+    ]
+  },
+  "toriel_ruins_intro": {
+    "id": "toriel_ruins_intro",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "conditionFlag": "toriel_entrance_cutscene",
+    "altDialogueId": "toriel_repeat",
+    "pages": [
+      {
+        "text": "* Bem-vindo ao seu novo lar, pequenino!",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Permita-me educá-lo sobre o funcionamento das RUÍNAS.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* As Ruínas estão repletas de quebra-cabeças antigos — fusões arcaicas entre diversões e trancas de portas.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Para passar de uma sala à outra, você deve desvendá-los.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Por favor, acostume-se à visão deles. Venha, vou demonstrar o primeiro logo adiante!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "toriel_entrance_cutscene"
+    }
+  },
+  "toriel_switch_advice": {
+    "id": "toriel_switch_advice",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "conditionFlag": "switch_toriel_labeled",
+    "altDialogueId": "toriel_switch_solved",
+    "pages": [
+      {
+        "text": "* Para avançar nesta sala, você precisa ativar os interruptores corretos na parede.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Não se preocupe! Eu rotulei claramente com bilhetinhos aqueles que você precisa acionar.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "toriel_switch_solved": {
+    "id": "toriel_switch_solved",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Esplêndido! Você é uma criança muito inteligente e aplicada!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Venha, vamos para a próxima câmara das Ruínas!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "sign_switch_labeled": {
+    "id": "sign_switch_labeled",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* Bilhete feito com giz amarelo por Toriel:\n* 'Por favor, aperte este interruptor! - Toriel ❤'",
+        "portrait": null
+      }
+    ]
+  },
+  "sign_switch_unlabeled": {
+    "id": "sign_switch_unlabeled",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* (Um interruptor comum na parede. Toriel não colocou nenhuma etiqueta neste.)",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_dummy_advice": {
+    "id": "toriel_dummy_advice",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "conditionFlag": "dummy_practiced",
+    "altDialogueId": "toriel_dummy_solved",
+    "pages": [
+      {
+        "text": "* Como um humano vivendo no Subterrâneo, outros monstros podem atacá-lo pelo caminho.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Porém, não se preocupe! O processo é simples.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Quando encontrar um monstro, você entrará em um combate.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Enquanto estiver em combate, apenas converse amigavelmente com [AGIR]. Ganhe tempo. Eu virei resolver o conflito!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Pratique conversando com aquele manequim ali.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "toriel_dummy_solved": {
+    "id": "toriel_dummy_solved",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Ah, você é tão doce! Estou muito orgulhosa de sua conduta pacífica, minha criança.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Pode prosseguir pelas Ruínas quando estiver pronto. Estarei zelando por você!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "dummy_practice": {
+    "id": "dummy_practice",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "conditionFlag": "dummy_practiced",
+    "altDialogueId": "dummy_repeat",
+    "pages": [
+      {
+        "text": "* Você se aproxima do Manequim de Treinamento de algodão.",
+        "portrait": null
+      },
+      {
+        "text": "* Você puxa assunto e diz um 'olá' carinhoso e gentil para ele...",
+        "portrait": null
+      },
+      {
+        "text": "* O manequim não parece muito falante, mas parece feliz com sua presença.",
+        "portrait": null
+      },
+      {
+        "text": "* Toriel assiste a tudo com um sorriso maternal radiante!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Toriel: 'Ah, muito bom! Você é uma criança muito bondosa e gentil!'",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* (Você venceu o treinamento! Ganhou 0 EXP e 0 de ouro. Seu coração se enche de DETERMINAÇÃO.)",
+        "portrait": null
+      }
+    ],
+    "onComplete": {
+      "setFlag": "dummy_practiced",
+      "restoreHp": true
+    }
+  },
+  "dummy_repeat": {
+    "id": "dummy_repeat",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* O manequim de algodão está imóvel, mas parece muito mais amigável agora.",
+        "portrait": null
       }
     ]
   },
@@ -246,7 +446,10 @@
         "text": "* Três triângulos coroados por um orbe alado.\n* Uma antiga profecia diz que um anjo descerá e esvaziará o Subterrâneo.",
         "portrait": null
       }
-    ]
+    ],
+    "onComplete": {
+      "setFlag": "read_delta_rune"
+    }
   },
   "sign_ruins_intro": {
     "id": "sign_ruins_intro",

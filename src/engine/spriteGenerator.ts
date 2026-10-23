@@ -559,6 +559,20 @@ export class SpriteGenerator {
       }
     }
 
+    // 4b. Particle Star for Save sparkle effects
+    if (!scene.textures.exists('particle_star')) {
+      const canvas = scene.textures.createCanvas('particle_star', 10, 10);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.fillStyle = '#ffff33';
+        ctx.fillRect(4, 0, 2, 10);
+        ctx.fillRect(0, 4, 10, 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(3, 3, 4, 4);
+        canvas.refresh();
+      }
+    }
+
     // 5. Chest
     if (!scene.textures.exists('prop_chest')) {
       const canvas = scene.textures.createCanvas('prop_chest', 32, 32);
@@ -826,6 +840,59 @@ export class SpriteGenerator {
         // Carved rune symbol on lintel
         ctx.fillStyle = '#f1c40f';
         ctx.fillRect(31, 14, 2, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 13. Training Dummy (Undertale Room 5)
+    if (!scene.textures.exists('prop_dummy')) {
+      const canvas = scene.textures.createCanvas('prop_dummy', 32, 48);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Wooden base stand
+        ctx.fillStyle = '#4a2c11';
+        ctx.fillRect(6, 42, 20, 4);
+        ctx.fillStyle = '#7a4b21';
+        ctx.fillRect(14, 30, 4, 14); // wooden post
+
+        // Stuffed cloth body sack
+        ctx.fillStyle = '#d7b899';
+        ctx.fillRect(8, 18, 16, 16);
+        ctx.fillStyle = '#c49c74';
+        ctx.fillRect(10, 20, 12, 12);
+        // Stitched cross patch on body
+        ctx.fillStyle = '#8b6540';
+        ctx.fillRect(18, 22, 4, 1);
+        ctx.fillRect(19, 21, 2, 3);
+
+        // Dummy head
+        ctx.fillStyle = '#e6ceb5';
+        ctx.fillRect(9, 6, 14, 13);
+        ctx.fillRect(11, 4, 10, 2);
+        ctx.fillStyle = '#d7b899';
+        ctx.fillRect(10, 7, 12, 11);
+
+        // Stitched button eyes (+)
+        ctx.fillStyle = '#2c1e11';
+        // Left eye
+        ctx.fillRect(11, 10, 3, 1);
+        ctx.fillRect(12, 9, 1, 3);
+        // Right eye
+        ctx.fillRect(18, 10, 3, 1);
+        ctx.fillRect(19, 9, 1, 3);
+
+        // Stitched mouth
+        ctx.fillRect(13, 15, 6, 1);
+        ctx.fillRect(14, 14, 1, 2);
+        ctx.fillRect(17, 14, 1, 2);
+
+        // Cotton stuffing tuft on top
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(14, 2, 4, 2);
+        ctx.fillRect(15, 1, 2, 2);
 
         canvas.refresh();
       }

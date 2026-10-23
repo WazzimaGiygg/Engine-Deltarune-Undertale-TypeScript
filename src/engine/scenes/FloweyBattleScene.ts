@@ -119,36 +119,94 @@ export class FloweyBattleScene extends Phaser.Scene {
     // Start Flowey's Speech Sequence
     this.runIntroSequence();
 
+    // Allow clicking or pressing Z/ENTER/SPACE to advance speeches faster
+    const onKeyAdvance = () => {
+      if (this.currentPhase === 'INTRO_SPEECH') {
+        this.advanceSpeechFast();
+      } else if (this.currentPhase === 'TORIEL_RESCUE') {
+        this.advanceTorielSpeech();
+      }
+    };
+    this.input.keyboard?.on('keydown-Z', onKeyAdvance);
+    this.input.keyboard?.on('keydown-ENTER', onKeyAdvance);
+    this.input.keyboard?.on('keydown-SPACE', onKeyAdvance);
+
+    // Mouse / Touch drag inside battle box
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (this.currentPhase === 'INTRO_SPEECH') {
+        this.advanceSpeechFast();
+      } else if (this.currentPhase === 'TORIEL_RESCUE') {
+        this.advanceTorielSpeech();
+      } else {
+        this.handlePointerSoulMove(p);
+      }
+    });
+
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (p.isDown) {
+        this.handlePointerSoulMove(p);
+      }
+    });
+
     // Virtual action support
     this.events.on('virtual_action', this.handleVirtualAction, this);
     this.events.once('shutdown', () => {
+      this.input.keyboard?.off('keydown-Z', onKeyAdvance);
+      this.input.keyboard?.off('keydown-ENTER', onKeyAdvance);
+      this.input.keyboard?.off('keydown-SPACE', onKeyAdvance);
       this.events.off('virtual_action', this.handleVirtualAction, this);
     });
   }
 
+  private handlePointerSoulMove(pointer: Phaser.Input.Pointer) {
+    if (this.currentPhase === 'PELLETS_SPAWN' || this.currentPhase === 'CIRCLE_OF_DEATH') {
+      this.soulPlayable.x = Phaser.Math.Clamp(
+        pointer.x,
+        this.boxBounds.x + 15,
+        this.boxBounds.x + this.boxBounds.w - 15
+      );
+      this.soulPlayable.y = Phaser.Math.Clamp(
+        pointer.y,
+        this.boxBounds.y + 15,
+        this.boxBounds.y + this.boxBounds.h - 15
+      );
+    }
+  }
+
+  private introCurrentIndex = 0;
+  private introTimerEvent: Phaser.Time.TimerEvent | null = null;
+  private introLines = [
+    'Vê aquele coração?\nEssa é a sua ALMA!',
+    'Sua alma começa fraca, mas cresce com LOVE!',
+    'Você quer um pouco de LOVE, não quer?',
+    'Aqui, LOVE é dividido por "pétalas da amizade"!',
+    'Mova-se! Pegue as pétalas para curar!',
+  ];
+
+  private advanceSpeechFast() {
+    if (this.currentPhase !== 'INTRO_SPEECH') return;
+    if (this.introTimerEvent) {
+      this.introTimerEvent.remove();
+      this.introTimerEvent = null;
+    }
+    this.showNextSpeechLine();
+  }
+
+  private showNextSpeechLine() {
+    if (this.introCurrentIndex < this.introLines.length) {
+      soundManager.playVoiceBlip('flowey');
+      this.speechText.setText(this.introLines[this.introCurrentIndex]);
+      this.introCurrentIndex++;
+      this.introTimerEvent = this.time.delayedCall(2200, () => this.showNextSpeechLine());
+    } else {
+      this.speechContainer.setVisible(false);
+      this.spawnFriendlinessPellets();
+    }
+  }
+
   private runIntroSequence() {
-    const lines = [
-      'Vê aquele coração?\nEssa é a sua ALMA!',
-      'Sua alma começa fraca, mas cresce com LOVE!',
-      'Você quer um pouco de LOVE, não quer?',
-      'Aqui, LOVE é dividido por "pétalas da amizade"!',
-      'Mova-se! Pegue as pétalas para curar!',
-    ];
-
-    let current = 0;
-    const showNext = () => {
-      if (current < lines.length) {
-        soundManager.playVoiceBlip('flowey');
-        this.speechText.setText(lines[current]);
-        current++;
-        this.time.delayedCall(2200, showNext);
-      } else {
-        this.speechContainer.setVisible(false);
-        this.spawnFriendlinessPellets();
-      }
-    };
-
-    this.time.delayedCall(400, showNext);
+    this.introCurrentIndex = 0;
+    this.introTimerEvent = this.time.delayedCall(300, () => this.showNextSpeechLine());
   }
 
   private spawnFriendlinessPellets() {
@@ -157,23 +215,38 @@ export class FloweyBattleScene extends Phaser.Scene {
     // 5 white rotating friendliness pellets falling down towards soul
     for (let i = 0; i < 5; i++) {
       const pellet = this.add.sprite(
-        this.boxBounds.x + 30 + i * 30,
+        this.boxBounds.x + 25 + i * 32,
         this.boxBounds.y + 15,
         'bullet_pellet'
       );
       pellet.setDepth(15);
       this.pellets.push(pellet);
     }
+
+    // Safety timeout: if player avoids pellets for 3.5s or they exit box, trigger hit
+    this.time.delayedCall(3600, () => {
+      if (this.currentPhase === 'PELLETS_SPAWN') {
+        this.triggerPelletHit();
+      }
+    });
   }
 
   update(_: number, delta: number) {
     if (this.currentPhase === 'PELLETS_SPAWN') {
       this.handleSoulMovement(delta);
 
-      // Move pellets downward
+      // Move pellets downward, with gentle homing towards the soul
+      let allOffscreen = true;
       this.pellets.forEach((p) => {
-        p.y += 45 * (delta / 1000);
-        p.rotation += 0.05;
+        if (!p.active) return;
+        p.y += 50 * (delta / 1000);
+        // Subtle drift towards soul to make interaction easy
+        p.x += (this.soulPlayable.x - p.x) * 0.015;
+        p.rotation += 0.06;
+
+        if (p.y < this.boxBounds.y + this.boxBounds.h) {
+          allOffscreen = false;
+        }
 
         // Check touch
         const dist = Phaser.Math.Distance.Between(
@@ -183,10 +256,14 @@ export class FloweyBattleScene extends Phaser.Scene {
           p.y
         );
 
-        if (dist < 16) {
+        if (dist < 18) {
           this.triggerPelletHit();
         }
       });
+
+      if (allOffscreen && this.pellets.length > 0) {
+        this.triggerPelletHit();
+      }
     } else if (this.currentPhase === 'CIRCLE_OF_DEATH') {
       this.handleSoulMovement(delta);
     }
@@ -332,10 +409,68 @@ export class FloweyBattleScene extends Phaser.Scene {
     });
   }
 
+  private torielSpeechLines = [
+    'Que criatura terrível, torturando uma alma jovem e tão inocente...',
+    'Ah, não tenha medo, minha criança. Eu sou TORIEL, guardiã das RUÍNAS.',
+    'Eu passo por este lugar todos os dias para ver se alguém caiu aqui.',
+    'Você é o primeiro humano a cair no Subterrâneo em muito tempo!',
+    'Venha! Eu irei protegê-lo e guiá-lo através das catacumbas.',
+    'Por aqui!',
+  ];
+  private torielSpeechIndex = 0;
+  private torielTimerEvent: Phaser.Time.TimerEvent | null = null;
+  private torielSpriteRef: Phaser.GameObjects.Sprite | null = null;
+
+  private advanceTorielSpeech() {
+    if (this.currentPhase !== 'TORIEL_RESCUE') return;
+    if (this.torielTimerEvent) {
+      this.torielTimerEvent.remove();
+      this.torielTimerEvent = null;
+    }
+    this.showNextTorielLine();
+  }
+
+  private showNextTorielLine() {
+    if (this.torielSpeechIndex < this.torielSpeechLines.length) {
+      soundManager.playVoiceBlip('toriel');
+      this.speechText.setText(this.torielSpeechLines[this.torielSpeechIndex]);
+      this.torielSpeechIndex++;
+      this.torielTimerEvent = this.time.delayedCall(2800, () => this.showNextTorielLine());
+    } else {
+      // Speech finished: Toriel guides Frisk north
+      this.speechContainer.setVisible(false);
+      if (this.torielSpriteRef) {
+        this.tweens.add({
+          targets: this.torielSpriteRef,
+          y: -60,
+          duration: 900,
+          ease: 'Sine.easeIn',
+          onComplete: () => {
+            // Mark flowey met and transition to Toriel's entrance room
+            gameState.setFlag('flowey_met', true);
+            gameState.setCurrentRoom('room_toriel_entrance', 320, 360);
+            this.cameras.main.fadeOut(500, 0, 0, 0);
+            this.cameras.main.once('camerafadeoutcomplete', () => {
+              this.scene.start('OverworldScene');
+            });
+          },
+        });
+      } else {
+        gameState.setFlag('flowey_met', true);
+        gameState.setCurrentRoom('room_toriel_entrance', 320, 360);
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('OverworldScene');
+        });
+      }
+    }
+  }
+
   private torielEnters() {
     const toriel = this.add.sprite(520, 130, 'npc_toriel');
     toriel.setScale(1.6);
     toriel.setDepth(20);
+    this.torielSpriteRef = toriel;
 
     this.tweens.add({
       targets: toriel,
@@ -343,39 +478,31 @@ export class FloweyBattleScene extends Phaser.Scene {
       duration: 1000,
       ease: 'Cubic.easeOut',
       onComplete: () => {
-        soundManager.playVoiceBlip('toriel');
-        this.speechContainer.setVisible(true);
-        this.speechContainer.setPosition(390, 60);
-        this.speechText.setText(
-          'Que criatura terrível, torturando uma alma inocente...\n\nNão tenha medo, minha criança.'
-        );
-
-        // Restore HP
+        // Restore HP with save chime
         gameState.restoreFullHp();
         soundManager.playSave();
         this.hpText.setText('20 / 20');
         this.hpBarFill.width = 80;
 
-        this.time.delayedCall(3000, () => {
-          this.speechText.setText(
-            'Eu sou TORIEL, guardiã das Ruínas.\n\nVenha, vou guiar você pelo Subterrâneo!'
-          );
+        this.speechContainer.setVisible(true);
+        this.speechContainer.setPosition(390, 50);
 
-          this.time.delayedCall(3000, () => {
-            // Mark flowey met and transition to Toriel's entrance room
-            gameState.setFlag('flowey_met', true);
-            gameState.setCurrentRoom('room_toriel_entrance', 320, 340);
-            this.cameras.main.fadeOut(500, 0, 0, 0);
-            this.cameras.main.once('camerafadeoutcomplete', () => {
-              this.scene.start('OverworldScene');
-            });
-          });
-        });
+        this.torielSpeechIndex = 0;
+        this.showNextTorielLine();
       },
     });
   }
 
   private handleVirtualAction(act: string) {
+    if (act === 'Z') {
+      if (this.currentPhase === 'INTRO_SPEECH') {
+        this.advanceSpeechFast();
+      } else if (this.currentPhase === 'TORIEL_RESCUE') {
+        this.advanceTorielSpeech();
+      }
+      return;
+    }
+
     if (this.currentPhase === 'PELLETS_SPAWN') {
       if (act === 'UP') this.soulPlayable.y -= 10;
       else if (act === 'DOWN') this.soulPlayable.y += 10;

@@ -65,7 +65,9 @@ export interface DialogueNode {
 export interface GameSaveData {
   stats: PlayerStats;
   currentRoom: string;
+  roomName?: string;
   playerPos: { x: number; y: number };
   flags: Record<string, boolean>;
   timestamp: number;
+  playtimeSeconds?: number;
 }
