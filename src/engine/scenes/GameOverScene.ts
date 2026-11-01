@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { soundManager } from '../../services/soundSynthesizer';
 import { gameState } from '../gameState';
+import { triggerScreenShake } from '../utils/screenShake';
 
 export class GameOverScene extends Phaser.Scene {
   private soulPieces: Phaser.GameObjects.Sprite[] = [];
@@ -10,6 +11,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create() {
+    gameState.setActiveScene('GameOverScene');
     soundManager.stopMusic();
     soundManager.playHurt();
 
@@ -22,6 +24,7 @@ export class GameOverScene extends Phaser.Scene {
     // Heart cracks after 0.5s
     this.time.delayedCall(500, () => {
       soundManager.playSlash();
+      triggerScreenShake(this, 'heavy');
       heart.destroy();
 
       // Spawn 4 heart shards flying in different directions

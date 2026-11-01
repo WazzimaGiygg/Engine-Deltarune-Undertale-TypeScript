@@ -47,7 +47,24 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
           <h4 className="text-xs text-neutral-400 mb-3 uppercase tracking-wide">
             1. Desafiar Monstro em Combate (Bullet-Hell):
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <button
+              onClick={() => {
+                soundManager.playBattleStart();
+                onSelectBattle('dummy');
+                onClose();
+              }}
+              className="p-3 text-left border border-neutral-700 bg-neutral-950 hover:border-yellow-400 hover:bg-neutral-900 transition-colors group cursor-pointer"
+            >
+              <span className="text-xs text-orange-300 font-bold block mb-1 group-hover:text-orange-200">
+                Boneco de Treino
+              </span>
+              <span className="text-[10px] text-neutral-400 block">HP: 15 · ATK: 0</span>
+              <span className="text-[9px] text-neutral-500 block mt-1">
+                Treinamento pacífico ou violento de Toriel.
+              </span>
+            </button>
+
             <button
               onClick={() => {
                 soundManager.playBattleStart();
@@ -98,6 +115,23 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
                 Estrelas velozes e caos rotativo.
               </span>
             </button>
+
+            <button
+              onClick={() => {
+                soundManager.playBattleStart();
+                onSelectBattle('flowey');
+                onClose();
+              }}
+              className="p-3 text-left border border-neutral-700 bg-neutral-950 hover:border-yellow-400 hover:bg-neutral-900 transition-colors group cursor-pointer"
+            >
+              <span className="text-xs text-yellow-400 font-bold block mb-1 group-hover:text-yellow-300">
+                Flowey
+              </span>
+              <span className="text-[10px] text-neutral-400 block">HP: 20 · Tutorial</span>
+              <span className="text-[9px] text-neutral-500 block mt-1">
+                Balinhas da amizade e anel mortal.
+              </span>
+            </button>
           </div>
         </div>
 
@@ -106,11 +140,11 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
           <h4 className="text-xs text-neutral-400 mb-3 uppercase tracking-wide">
             2. Teleporte no Mapa das Ruínas:
           </h4>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs max-h-56 overflow-y-auto pr-1">
             <button
               onClick={() => {
                 soundManager.playMenuSelect();
-                onWarpRoom('room_awakening', 320, 280);
+                onWarpRoom('room_awakening', 320, 240);
                 onClose();
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
@@ -120,12 +154,12 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
             <button
               onClick={() => {
                 soundManager.playMenuSelect();
-                onWarpRoom('room_flowey', 320, 300);
+                onWarpRoom('room_flowey', 240, 240);
                 onClose();
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
             >
-              • 1. Encontro com Flowey
+              • 1. Clareira de Flowey
             </button>
             <button
               onClick={() => {
@@ -135,7 +169,27 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
             >
-              • 2. Entrada com Toriel
+              • 2. Entrada das Ruínas
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('ruins_switch_chamber', 320, 340);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
+            >
+              • 3. Sala Interruptores
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('ruins_dummy_room', 320, 320);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
+            >
+              • 4. Sala do Manequim
             </button>
             <button
               onClick={() => {
@@ -145,27 +199,77 @@ export const BattleSimulatorModal: React.FC<BattleSimulatorModalProps> = ({
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
             >
-              • 3. Enigma de Espinhos
+              • 5. Enigma de Espinhos
             </button>
             <button
               onClick={() => {
                 soundManager.playMenuSelect();
-                onWarpRoom('ruins_crossroads', 320, 300);
+                onWarpRoom('ruins_long_hall', 320, 340);
                 onClose();
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
             >
-              • 4. Cruzamento Monstros
+              • 6. O Longo Corredor
             </button>
             <button
               onClick={() => {
                 soundManager.playMenuSelect();
-                onWarpRoom('ruins_boss_gate', 320, 320);
+                onWarpRoom('room_toriel_house_exterior', 240, 310);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
+            >
+              • 7. Fachada da Casa
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_toriel_house_interior', 320, 360);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
+            >
+              • 8. Casa de Toriel (Sala)
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_toriel_hallway', 320, 260);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-yellow-300 hover:text-yellow-200"
+            >
+              • 9. Casa de Toriel (Corredor)
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_player_bedroom', 320, 340);
                 onClose();
               }}
               className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
             >
-              • 5. Portão dos Guardiões
+              • 10. Quarto da Criança
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_toriel_bedroom', 320, 340);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
+            >
+              • 11. Quarto de Toriel
+            </button>
+            <button
+              onClick={() => {
+                soundManager.playMenuSelect();
+                onWarpRoom('room_toriel_basement', 200, 230);
+                onClose();
+              }}
+              className="p-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-left text-[11px] text-neutral-300 hover:text-white"
+            >
+              • 12. Saída Subterrânea
             </button>
           </div>
         </div>

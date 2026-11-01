@@ -2,20 +2,12 @@ import Phaser from 'phaser';
 import { ENEMIES } from '../../data/defaultData';
 import { soundManager } from '../../services/soundSynthesizer';
 import { EnemyAct, EnemyData } from '../../types/game';
+import { BattleTurnManager, BattleTurnPhase } from '../BattleTurnManager';
+import { combatLogManager } from '../combatLogManager';
 import { gameState } from '../gameState';
 import { SpriteGenerator } from '../spriteGenerator';
-
-type BattlePhase =
-  | 'INTRO'
-  | 'MENU_MAIN'
-  | 'MENU_ACT'
-  | 'MENU_ITEM'
-  | 'MENU_MERCY'
-  | 'TARGET_FIGHT'
-  | 'ENEMY_DIALOGUE'
-  | 'ENEMY_ATTACK'
-  | 'VICTORY'
-  | 'GAME_OVER';
+import { spawnHitExplosion, spawnMercySparkles, spawnMonsterDustExplosion } from '../utils/combatParticles';
+import { triggerScreenShake } from '../utils/screenShake';
 
 interface Bullet {
   sprite: Phaser.GameObjects.Sprite | Phaser.GameObjects.Shape | Phaser.GameObjects.Image;
@@ -25,21 +17,35 @@ interface Bullet {
   customUpdate?: (time: number, delta: number) => void;
 }
 
+interface ArenaBounds {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export class BattleScene extends Phaser.Scene {
   private enemyData!: EnemyData;
-  private currentPhase: BattlePhase = 'INTRO';
-  private isInputLocked = false; // V.0.0.2-SC.1: Lock inputs during action execution
+  public turnManager!: BattleTurnManager;
 
   // Visual Components
   private enemySprite!: Phaser.GameObjects.Sprite;
   private enemySpeechBubble!: Phaser.GameObjects.Container;
   private enemySpeechText!: Phaser.GameObjects.Text;
+  private dialogueTimerEvent: Phaser.Time.TimerEvent | null = null;
 
+  // Arena Bounds Constants
+  private static readonly DEFAULT_BOX_BOUNDS: Readonly<ArenaBounds> = Object.freeze({ x: 70, y: 250, w: 500, h: 140 });
+  private static readonly ATTACK_BOX_BOUNDS: Readonly<ArenaBounds> = Object.freeze({ x: 230, y: 240, w: 180, h: 150 });
+
+  // Arena Bounds
   private battleBox!: Phaser.GameObjects.Graphics;
-  private boxBounds = { x: 70, y: 250, w: 500, h: 140 };
-  private defaultBoxBounds = { x: 70, y: 250, w: 500, h: 140 };
-  private attackBoxBounds = { x: 230, y: 240, w: 180, h: 150 };
+  private boxBounds: ArenaBounds = { ...BattleScene.DEFAULT_BOX_BOUNDS };
 
+  // Turn Header / Status
+  private turnIndicatorText!: Phaser.GameObjects.Text;
+
+  // Souls & Reticle
   private soulCursor!: Phaser.GameObjects.Sprite;
   private soulPlayable!: Phaser.GameObjects.Sprite;
   private targetMeterContainer!: Phaser.GameObjects.Container;
@@ -51,12 +57,11 @@ export class BattleScene extends Phaser.Scene {
   private narrativeText!: Phaser.GameObjects.Text;
   private subMenuItems: Phaser.GameObjects.Text[] = [];
 
-  // Bottom Buttons
+  // Bottom Action Buttons
   private buttons: Array<{
     name: 'FIGHT' | 'ACT' | 'ITEM' | 'MERCY';
     container: Phaser.GameObjects.Container;
     label: Phaser.GameObjects.Text;
-    icon: Phaser.GameObjects.Text;
   }> = [];
   private selectedButtonIndex = 0;
   private selectedSubMenuIndex = 0;
@@ -71,11 +76,11 @@ export class BattleScene extends Phaser.Scene {
   // Bullet Hell
   private bullets: Bullet[] = [];
   private attackTimer = 0;
-  private attackDuration = 6500;
+  private attackDuration = 6200;
   private invincibilityTimer = 0;
   private soulSpeed = 160;
 
-  // Keyboard
+  // Controls
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: {
     W: Phaser.Input.Keyboard.Key;
@@ -89,31 +94,80 @@ export class BattleScene extends Phaser.Scene {
     ESC: Phaser.Input.Keyboard.Key;
   };
 
+  private isCleaningUp = false;
+
   constructor() {
     super('BattleScene');
   }
 
   init(data: { enemyId?: string }) {
-    // V.0.0.2-GH.1: Clean re-initialization to avoid freezes
+    this.cleanupFullSceneLifecycle();
+
     const enemyFactory = (data?.enemyId && ENEMIES[data.enemyId]) || ENEMIES.froggit;
     this.enemyData = enemyFactory();
-    this.currentPhase = 'INTRO';
-    this.isInputLocked = false;
+    gameState.recordEncounter(this.enemyData.id);
     this.selectedButtonIndex = 0;
     this.selectedSubMenuIndex = 0;
+    this.buttons = [];
+    this.subMenuItems = [];
     this.bullets = [];
     this.attackTimer = 0;
     this.invincibilityTimer = 0;
     this.targetMoving = false;
     this.targetBarX = 0;
-    this.boxBounds = { ...this.defaultBoxBounds };
+    this.boxBounds = { ...BattleScene.DEFAULT_BOX_BOUNDS };
+
+    if (this.dialogueTimerEvent) {
+      this.dialogueTimerEvent.remove(false);
+      this.dialogueTimerEvent = null;
+    }
+
+    // Instantiate Turn Manager with callbacks
+    this.turnManager = new BattleTurnManager(this.enemyData, {
+      onPhaseChange: (newPhase, oldPhase) => {
+        this.handlePhaseChange(newPhase, oldPhase);
+      },
+      onTurnIncrement: (turnNum) => {
+        this.updateTurnIndicator(turnNum);
+      },
+      onPlayerTurnStart: (turnNum, flavorText) => {
+        this.preparePlayerTurnUI(turnNum, flavorText);
+      },
+      onEnemyDialogue: (text) => {
+        this.showEnemySpeech(text);
+      },
+      onEnemyAttackStart: (pattern, durationMs) => {
+        this.executeAttackWaveSequence(pattern, durationMs);
+      },
+      onEnemyAttackEnd: () => {
+        this.cleanupEnemyAttackWave();
+      },
+    });
   }
 
   create() {
+    gameState.setActiveScene('BattleScene');
+    gameState.recordEncounter(this.enemyData.id);
     SpriteGenerator.generateAllTextures(this);
     soundManager.playMusic('battle');
 
-    // Input
+    combatLogManager.clearLog();
+    combatLogManager.addEntry({
+      turn: 1,
+      source: 'system',
+      actionType: 'intro',
+      actor: 'Sistema',
+      title: `Batalha contra ${this.enemyData.name}!`,
+      description: this.enemyData.introText || `* ${this.enemyData.name} apareceu no seu caminho!`,
+      reaction: `* Sua Alma (♥) se manifesta pronta para o confronto.`,
+    });
+
+    this.buttons = [];
+    this.subMenuItems = [];
+    this.bullets = [];
+    this.boxBounds = { ...BattleScene.DEFAULT_BOX_BOUNDS };
+
+    // Setup Keyboard Controls
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.wasd = {
       W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
@@ -127,7 +181,7 @@ export class BattleScene extends Phaser.Scene {
       ESC: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC),
     };
 
-    // 1. Draw Enemy with balanced mob sizing (V.0.0.2-8I.1)
+    // 1. Draw Enemy Sprite with balanced mob sizing
     let spriteScale = 1.0;
     let spriteY = 125;
 
@@ -140,12 +194,16 @@ export class BattleScene extends Phaser.Scene {
     } else if (this.enemyData.id === 'deltajester') {
       spriteScale = 1.0;
       spriteY = 125;
+    } else if (this.enemyData.id === 'dummy') {
+      spriteScale = 2.0;
+      spriteY = 135;
     }
 
     this.enemySprite = this.add.sprite(320, spriteY, this.enemyData.spriteKey);
     this.enemySprite.setScale(spriteScale);
     this.enemySprite.setDepth(10);
 
+    // Subtle enemy floating breathing animation
     this.tweens.add({
       targets: this.enemySprite,
       y: spriteY - 5,
@@ -155,14 +213,14 @@ export class BattleScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // 2. Enemy Speech Bubble (V.0.0.2-H6.1: Strictly placed at upper right, avoiding heart box)
-    this.enemySpeechBubble = this.add.container(400, 65);
+    // 2. Enemy Speech Bubble at Upper Right
+    this.enemySpeechBubble = this.add.container(390, 65);
     this.enemySpeechBubble.setDepth(20);
     this.enemySpeechBubble.setVisible(false);
 
     const bubbleBg = this.add.graphics();
     bubbleBg.fillStyle(0xffffff, 1);
-    bubbleBg.fillRoundedRect(0, 0, 180, 56, 6);
+    bubbleBg.fillRoundedRect(0, 0, 195, 58, 6);
     bubbleBg.fillTriangle(0, 20, -10, 24, 0, 28);
     this.enemySpeechBubble.add(bubbleBg);
 
@@ -170,15 +228,15 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '8px',
       color: '#000000',
-      wordWrap: { width: 160 },
+      wordWrap: { width: 175 },
       lineSpacing: 4,
     });
     this.enemySpeechBubble.add(this.enemySpeechText);
 
-    // 3. Battle Box
+    // 3. Battle Arena Box
     this.battleBox = this.add.graphics();
     this.battleBox.setDepth(5);
-    this.redrawBattleBox(this.defaultBoxBounds);
+    this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
 
     // 4. Narrative / Menu Text inside Box
     this.narrativeText = this.add.text(95, 268, '', {
@@ -190,48 +248,62 @@ export class BattleScene extends Phaser.Scene {
     });
     this.narrativeText.setDepth(8);
 
-    // 5. Soul in Bullet Hell mode
+    // 5. Turn / Phase subtle indicator
+    this.turnIndicatorText = this.add.text(560, 235, 'TURNO 1', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: '#666666',
+    });
+    this.turnIndicatorText.setOrigin(1, 1);
+    this.turnIndicatorText.setDepth(6);
+
+    // 6. Soul in Bullet Hell mode
     this.soulPlayable = this.add.sprite(320, 310, 'soul_red');
     this.soulPlayable.setDepth(25);
     this.soulPlayable.setVisible(false);
 
-    // 6. Soul Cursor for Menu navigation
+    // 7. Soul Cursor for Menu navigation
     this.soulCursor = this.add.sprite(80, 442, 'soul_red');
     this.soulCursor.setDepth(25);
 
-    // 7. Target Meter Container
+    // 8. Target Meter Container for FIGHT minigame
     this.createTargetMeter();
 
-    // 8. Bottom HUD Stats
+    // 9. Bottom HUD Stats (LV, HP bar, HP numbers)
     this.createHUD();
 
-    // 9. Bottom 4 Buttons
+    // 10. Bottom Action Buttons (LUTAR, AGIR, ITEM, POUPAR)
     this.createButtons();
 
-    // Start with Intro message
-    this.narrativeText.setText(this.enemyData.introText);
-    this.currentPhase = 'MENU_MAIN';
-    this.isInputLocked = false;
-    this.updateButtonSoulPosition();
-
-    // Listen to virtual action triggers
+    // Virtual action triggers from mobile D-Pad / virtual buttons (clear old listener first)
+    this.events.off('virtual_action', this.handleVirtualAction, this);
     this.events.on('virtual_action', this.handleVirtualAction, this);
 
-    // V.0.0.2-GH.1: Clean up on scene shutdown
-    this.events.once('shutdown', () => {
-      this.events.off('virtual_action', this.handleVirtualAction, this);
-      this.bullets.forEach((b) => b.sprite.destroy());
-      this.bullets = [];
-    });
+    // Clean up on scene shutdown and destroy
+    this.events.once('shutdown', this.cleanupFullSceneLifecycle, this);
+    this.events.once('destroy', this.cleanupFullSceneLifecycle, this);
+
+    // Start Battle with Turn 1
+    this.turnManager.startBattle();
   }
 
   private redrawBattleBox(bounds: { x: number; y: number; w: number; h: number }) {
-    this.boxBounds = bounds;
+    this.boxBounds.x = bounds.x;
+    this.boxBounds.y = bounds.y;
+    this.boxBounds.w = bounds.w;
+    this.boxBounds.h = bounds.h;
+
     this.battleBox.clear();
     this.battleBox.fillStyle(0x000000, 1);
-    this.battleBox.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    this.battleBox.fillRect(this.boxBounds.x, this.boxBounds.y, this.boxBounds.w, this.boxBounds.h);
     this.battleBox.lineStyle(5, 0xffffff, 1);
-    this.battleBox.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    this.battleBox.strokeRect(this.boxBounds.x, this.boxBounds.y, this.boxBounds.w, this.boxBounds.h);
+  }
+
+  private updateTurnIndicator(turnNum: number) {
+    if (this.turnIndicatorText) {
+      this.turnIndicatorText.setText(`TURNO ${turnNum}`);
+    }
   }
 
   private createTargetMeter() {
@@ -325,7 +397,7 @@ export class BattleScene extends Phaser.Scene {
       container.setSize(104, 36);
       container.setInteractive({ useHandCursor: true });
       container.on('pointerdown', () => {
-        if (!this.isInputLocked && this.currentPhase === 'MENU_MAIN') {
+        if (this.turnManager.isInputAllowed() && this.turnManager.getPhase() === 'PLAYER_MENU') {
           this.selectedButtonIndex = idx;
           this.updateButtonSoulPosition();
           soundManager.playMenuSelect();
@@ -337,42 +409,90 @@ export class BattleScene extends Phaser.Scene {
         name: cfg.name,
         container,
         label,
-        icon: label,
       });
     });
   }
 
   private updateButtonSoulPosition() {
-    if (this.currentPhase === 'MENU_MAIN') {
-      const btn = this.buttons[this.selectedButtonIndex];
-      this.soulCursor.setVisible(true);
-      this.soulCursor.setPosition(btn.container.x - 42, btn.container.y);
+    if (this.buttons.length === 0) return;
+    if (this.turnManager.getPhase() === 'PLAYER_MENU') {
+      const idx = Math.max(0, Math.min(this.buttons.length - 1, this.selectedButtonIndex));
+      const btn = this.buttons[idx];
+      if (btn && btn.container && btn.container.active) {
+        this.soulCursor.setVisible(true);
+        this.soulCursor.setPosition(btn.container.x - 42, btn.container.y);
+      }
 
       this.buttons.forEach((b, i) => {
-        const isSelected = i === this.selectedButtonIndex;
-        b.label.setColor(isSelected ? '#ffff00' : '#e67e22');
+        if (b && b.label && b.label.active) {
+          const isSelected = i === idx;
+          b.label.setColor(isSelected ? '#ffff00' : '#e67e22');
+        }
+      });
+    }
+  }
+
+  // --- STATE TRANSITION HANDLERS (Governed by BattleTurnManager) ---
+  private handlePhaseChange(newPhase: BattleTurnPhase, oldPhase: BattleTurnPhase) {
+    if (newPhase === 'PLAYER_MENU') {
+      this.clearSubMenuItems();
+      this.targetMeterContainer.setVisible(false);
+      this.soulPlayable.setVisible(false);
+      this.hideEnemySpeech();
+      this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
+      this.narrativeText.setVisible(true);
+      this.updateButtonSoulPosition();
+    } else if (newPhase === 'ENEMY_ATTACK') {
+      this.soulCursor.setVisible(false);
+      this.buttons.forEach((b) => {
+        if (b && b.label && b.label.active) {
+          b.label.setColor('#e67e22');
+        }
+      });
+    }
+  }
+
+  private preparePlayerTurnUI(turnNum: number, flavorText: string) {
+    this.updateTurnIndicator(turnNum);
+    this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
+    this.narrativeText.setVisible(true);
+    this.narrativeText.setText(flavorText);
+    this.clearSubMenuItems();
+    this.updateButtonSoulPosition();
+
+    if (turnNum > 1) {
+      combatLogManager.addEntry({
+        turn: turnNum,
+        source: 'system',
+        actionType: 'turn_start',
+        actor: 'Turno',
+        title: `--- TURNO ${turnNum} ---`,
+        description: flavorText || `* O que você fará neste turno?`,
       });
     }
   }
 
   update(time: number, delta: number) {
-    if (this.currentPhase === 'MENU_MAIN') {
+    const phase = this.turnManager.getPhase();
+
+    if (phase === 'PLAYER_MENU') {
       this.handleMainMenuInput();
-    } else if (
-      this.currentPhase === 'MENU_ACT' ||
-      this.currentPhase === 'MENU_ITEM' ||
-      this.currentPhase === 'MENU_MERCY'
-    ) {
+    } else if (phase === 'PLAYER_SUBMENU') {
       this.handleSubMenuInput();
-    } else if (this.currentPhase === 'TARGET_FIGHT') {
+    } else if (phase === 'PLAYER_TARGET') {
       this.handleTargetMeter(delta);
-    } else if (this.currentPhase === 'ENEMY_ATTACK') {
+    } else if (phase === 'ENEMY_DIALOGUE') {
+      this.handleDialogueInput();
+    } else if (phase === 'ENEMY_ATTACK') {
       this.handleBulletHell(time, delta);
+    } else if (phase === 'VICTORY') {
+      this.handleVictoryInput();
     }
   }
 
+  // --- 1. PLAYER MENU & INPUT ---
   private handleMainMenuInput() {
-    if (this.isInputLocked) return; // V.0.0.2-SC.1
+    if (!this.turnManager.isInputAllowed()) return;
 
     const left =
       Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
@@ -401,7 +521,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private confirmMainMenuSelection() {
-    if (this.isInputLocked) return;
+    if (!this.turnManager.isInputAllowed()) return;
 
     const active = this.buttons[this.selectedButtonIndex].name;
 
@@ -416,9 +536,9 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  // --- 1. FIGHT TARGET MINIGAME ---
+  // --- 2. FIGHT TARGET MINIGAME ---
   private startFightTarget() {
-    this.currentPhase = 'TARGET_FIGHT';
+    this.turnManager.startFightTarget();
     this.narrativeText.setVisible(false);
     this.soulCursor.setVisible(false);
     this.targetMeterContainer.setVisible(true);
@@ -441,12 +561,13 @@ export class BattleScene extends Phaser.Scene {
 
     if (hit || this.targetBarX >= 220) {
       this.targetMoving = false;
-      this.isInputLocked = true; // Lock key input until next turn
       this.executePlayerAttack(this.targetBarX);
     }
   }
 
   private executePlayerAttack(finalX: number) {
+    this.turnManager.completePlayerAction();
+
     const distFromCenter = Math.abs(finalX);
     const stats = gameState.getStats();
     const weaponBonus = stats.weapon.value;
@@ -469,6 +590,21 @@ export class BattleScene extends Phaser.Scene {
     soundManager.playSlash();
     const slash = this.add.sprite(this.enemySprite.x, this.enemySprite.y, 'fx_slash');
     slash.setDepth(30);
+
+    // Visceral hit particle explosion & screen shake
+    spawnHitExplosion(this, {
+      x: this.enemySprite.x,
+      y: this.enemySprite.y,
+      isCritical,
+      damage,
+    });
+
+    const isBoss = this.enemyData.id === 'sir_ossos' || this.enemyData.id === 'deltajester';
+    if (isCritical && isBoss) {
+      triggerScreenShake(this, 'boss_hit');
+    } else if (isCritical) {
+      triggerScreenShake(this, 'critical');
+    }
 
     this.tweens.add({
       targets: this.enemySprite,
@@ -510,21 +646,39 @@ export class BattleScene extends Phaser.Scene {
 
     this.enemyData.hp = Math.max(0, this.enemyData.hp - damage);
 
-    this.time.delayedCall(1200, () => {
+    const remainingHp = this.enemyData.hp;
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'player',
+      actionType: 'fight',
+      actor: stats.name,
+      title: isCritical ? `Ataque Crítico! (${damage} DMG)` : `Ataque Normal (${damage} DMG)`,
+      description: `Você sincronizou o retículo de ataque e causou ${damage} de dano físico em ${this.enemyData.name}!`,
+      reaction:
+        remainingHp <= 0
+          ? `${this.enemyData.name} sucumbiu ao impacto e se desfaz em poeira!`
+          : `${this.enemyData.name} estremeceu com o golpe! Restam ${remainingHp}/${this.enemyData.maxHp} HP.`,
+      statsChange: { hpChange: -damage },
+    });
+
+    const timer = this.time.delayedCall(1200, () => {
       this.targetMeterContainer.setVisible(false);
       this.narrativeText.setVisible(true);
 
       if (this.enemyData.hp <= 0) {
+        this.turnManager.triggerVictory();
         this.handleEnemyDefeated();
       } else {
-        this.startEnemyTurn();
+        this.startEnemyDialogueSequence();
       }
     });
+
+    this.turnManager.registerCleanup(() => timer.remove(false));
   }
 
-  // --- 2. ACT SUB-MENU ---
+  // --- 3. SUBMENUS (ACT, ITEM, MERCY) ---
   private openActSubMenu() {
-    this.currentPhase = 'MENU_ACT';
+    this.turnManager.openSubMenu();
     this.narrativeText.setVisible(false);
     this.clearSubMenuItems();
 
@@ -540,7 +694,7 @@ export class BattleScene extends Phaser.Scene {
       text.setDepth(10);
       text.setInteractive({ useHandCursor: true });
       text.on('pointerdown', () => {
-        if (!this.isInputLocked) {
+        if (this.turnManager.isInputAllowed()) {
           this.selectedSubMenuIndex = idx;
           this.confirmSubMenuSelection();
         }
@@ -551,9 +705,8 @@ export class BattleScene extends Phaser.Scene {
     this.updateSubMenuSoulPosition();
   }
 
-  // --- 3. ITEM SUB-MENU ---
   private openItemSubMenu() {
-    this.currentPhase = 'MENU_ITEM';
+    this.turnManager.openSubMenu();
     this.narrativeText.setVisible(false);
     this.clearSubMenuItems();
 
@@ -581,7 +734,7 @@ export class BattleScene extends Phaser.Scene {
       text.setDepth(10);
       text.setInteractive({ useHandCursor: true });
       text.on('pointerdown', () => {
-        if (!this.isInputLocked) {
+        if (this.turnManager.isInputAllowed()) {
           this.selectedSubMenuIndex = idx;
           this.confirmSubMenuSelection();
         }
@@ -592,9 +745,8 @@ export class BattleScene extends Phaser.Scene {
     this.updateSubMenuSoulPosition();
   }
 
-  // --- 4. MERCY SUB-MENU ---
   private openMercySubMenu() {
-    this.currentPhase = 'MENU_MERCY';
+    this.turnManager.openSubMenu();
     this.narrativeText.setVisible(false);
     this.clearSubMenuItems();
 
@@ -614,7 +766,7 @@ export class BattleScene extends Phaser.Scene {
     spareText.setDepth(10);
     spareText.setInteractive({ useHandCursor: true });
     spareText.on('pointerdown', () => {
-      if (!this.isInputLocked) {
+      if (this.turnManager.isInputAllowed()) {
         this.selectedSubMenuIndex = 0;
         this.confirmSubMenuSelection();
       }
@@ -629,7 +781,7 @@ export class BattleScene extends Phaser.Scene {
     fleeText.setDepth(10);
     fleeText.setInteractive({ useHandCursor: true });
     fleeText.on('pointerdown', () => {
-      if (!this.isInputLocked) {
+      if (this.turnManager.isInputAllowed()) {
         this.selectedSubMenuIndex = 1;
         this.confirmSubMenuSelection();
       }
@@ -654,7 +806,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private handleSubMenuInput() {
-    if (this.isInputLocked) return; // V.0.0.2-SC.1
+    if (!this.turnManager.isInputAllowed()) return;
 
     const left =
       Phaser.Input.Keyboard.JustDown(this.cursors.left) ||
@@ -699,27 +851,24 @@ export class BattleScene extends Phaser.Scene {
 
   private returnToMainMenu() {
     this.clearSubMenuItems();
-    this.narrativeText.setVisible(true);
-    this.narrativeText.setText(this.enemyData.introText);
-    this.currentPhase = 'MENU_MAIN';
-    this.isInputLocked = false;
-    this.updateButtonSoulPosition();
+    this.turnManager.returnToMainMenu();
   }
 
   private confirmSubMenuSelection() {
-    if (this.isInputLocked) return;
+    if (!this.turnManager.isInputAllowed()) return;
 
-    if (this.currentPhase === 'MENU_ACT') {
+    const activeBtn = this.buttons[this.selectedButtonIndex].name;
+
+    if (activeBtn === 'ACT') {
       const act = this.enemyData.acts[this.selectedSubMenuIndex];
       if (act) {
-        this.isInputLocked = true; // Lock key input until next turn
         this.executeAct(act);
       }
-    } else if (this.currentPhase === 'MENU_ITEM') {
+    } else if (activeBtn === 'ITEM') {
       const stats = gameState.getStats();
       const item = stats.inventory[this.selectedSubMenuIndex];
       if (item) {
-        this.isInputLocked = true;
+        this.turnManager.completePlayerAction();
         const res = gameState.useItem(this.selectedSubMenuIndex);
         this.refreshHUD();
         this.clearSubMenuItems();
@@ -727,35 +876,63 @@ export class BattleScene extends Phaser.Scene {
         this.narrativeText.setText(res.message);
         this.soulCursor.setVisible(false);
 
-        this.time.delayedCall(1600, () => {
-          this.startEnemyTurn();
+        combatLogManager.addEntry({
+          turn: this.turnManager.getTurnNumber(),
+          source: 'player',
+          actionType: 'item',
+          actor: stats.name,
+          title: `Item: ${item.name}`,
+          description: res.message,
+          reaction: `* A Alma de ${stats.name} foi nutrida.`,
+          statsChange: { hpChange: item.value },
         });
+
+        const timer = this.time.delayedCall(1600, () => {
+          this.startEnemyDialogueSequence();
+        });
+        this.turnManager.registerCleanup(() => timer.remove(false));
       } else {
         this.returnToMainMenu();
       }
-    } else if (this.currentPhase === 'MENU_MERCY') {
+    } else if (activeBtn === 'MERCY') {
       if (this.selectedSubMenuIndex === 0) {
         if (this.enemyData.mercyProgress >= 100) {
-          this.isInputLocked = true;
+          this.turnManager.triggerVictory();
           this.handleEnemySpared();
         } else {
-          this.isInputLocked = true;
+          this.turnManager.completePlayerAction();
           this.clearSubMenuItems();
           this.narrativeText.setVisible(true);
-          this.narrativeText.setText(`* O nome de ${this.enemyData.name} ainda não é amarelo. Ele ainda quer lutar!`);
+          this.narrativeText.setText(
+            `* O nome de ${this.enemyData.name} ainda não é amarelo. Ele ainda quer lutar!`
+          );
           this.soulCursor.setVisible(false);
-          this.time.delayedCall(1600, () => {
-            this.startEnemyTurn();
+
+          combatLogManager.addEntry({
+            turn: this.turnManager.getTurnNumber(),
+            source: 'player',
+            actionType: 'mercy',
+            actor: gameState.getStats().name,
+            title: `Poupar (Recusado)`,
+            description: `Você ofereceu misericórdia e abaixou a guarda para ${this.enemyData.name}.`,
+            reaction: `* O nome de ${this.enemyData.name} ainda não é amarelo (${this.enemyData.mercyProgress}% Piedade). O confronto prossegue!`,
           });
+
+          const timer = this.time.delayedCall(1600, () => {
+            this.startEnemyDialogueSequence();
+          });
+          this.turnManager.registerCleanup(() => timer.remove(false));
         }
       } else {
-        this.isInputLocked = true;
+        this.turnManager.triggerVictory();
         this.handleFlee();
       }
     }
   }
 
   private executeAct(act: EnemyAct) {
+    this.turnManager.completePlayerAction();
+
     this.enemyData.mercyProgress = Math.min(100, this.enemyData.mercyProgress + act.mercyGain);
     if (this.enemyData.mercyProgress >= 100) {
       this.enemyData.canSpare = true;
@@ -765,82 +942,186 @@ export class BattleScene extends Phaser.Scene {
       this.enemyData.def = Math.max(0, this.enemyData.def - 2);
     }
 
+    const stats = gameState.getStats();
+    const canSpareNow = this.enemyData.mercyProgress >= 100;
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'player',
+      actionType: 'act',
+      actor: stats.name,
+      title: `Ação (ACT): ${act.name}`,
+      description: `${act.description}\n${act.resultText}`,
+      reaction: `"${act.enemyReply}" (${
+        canSpareNow
+          ? `O nome de ${this.enemyData.name} ficou AMARELO!`
+          : `+${act.mercyGain}% Piedade (Total: ${this.enemyData.mercyProgress}%)`
+      })`,
+      statsChange: {
+        mercyChange: act.mercyGain,
+        defChange: act.specialAction === 'DEF_DOWN' ? -2 : undefined,
+      },
+    });
+
     this.clearSubMenuItems();
     this.narrativeText.setVisible(true);
     this.narrativeText.setText(act.resultText);
     this.soulCursor.setVisible(false);
 
-    // Show enemy speech reply at upper right
-    this.showEnemySpeech(act.enemyReply);
-
-    this.time.delayedCall(2000, () => {
-      this.hideEnemySpeech();
-      this.startEnemyTurn();
+    const timer = this.time.delayedCall(1800, () => {
+      this.startEnemyDialogueSequence(act.enemyReply);
     });
+    this.turnManager.registerCleanup(() => timer.remove(false));
+  }
+
+  // --- 4. ENEMY DIALOGUE & TRANSITION ---
+  private startEnemyDialogueSequence(dialogueText?: string) {
+    this.narrativeText.setVisible(false);
+    this.soulCursor.setVisible(false);
+    this.turnManager.startEnemyDialogue(dialogueText);
+
+    // Auto-advance after 1400ms or when player presses Z
+    if (this.dialogueTimerEvent) {
+      this.dialogueTimerEvent.remove(false);
+    }
+    this.dialogueTimerEvent = this.time.delayedCall(1400, () => {
+      this.advanceFromDialogueToAttack();
+    });
+    this.turnManager.registerCleanup(() => {
+      if (this.dialogueTimerEvent) this.dialogueTimerEvent.remove(false);
+    });
+  }
+
+  private handleDialogueInput() {
+    const confirm =
+      Phaser.Input.Keyboard.JustDown(this.wasd.Z) ||
+      Phaser.Input.Keyboard.JustDown(this.wasd.ENTER);
+
+    if (confirm) {
+      this.advanceFromDialogueToAttack();
+    }
+  }
+
+  private advanceFromDialogueToAttack() {
+    if (this.dialogueTimerEvent) {
+      this.dialogueTimerEvent.remove(false);
+      this.dialogueTimerEvent = null;
+    }
+    this.hideEnemySpeech();
+
+    // If fighting Dummy, Dummy does not shoot bullets!
+    // Maintain full-width box so the narration is enclosed neatly
+    if (this.enemyData.id === 'dummy') {
+      this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
+      this.turnManager.startEnemyAttack();
+      return;
+    }
+
+    this.tweens.killTweensOf(this.boxBounds);
+
+    // Morph the battle box to bullet hell dodging arena
+    this.tweens.add({
+      targets: this.boxBounds,
+      x: BattleScene.ATTACK_BOX_BOUNDS.x,
+      y: BattleScene.ATTACK_BOX_BOUNDS.y,
+      w: BattleScene.ATTACK_BOX_BOUNDS.w,
+      h: BattleScene.ATTACK_BOX_BOUNDS.h,
+      duration: 300,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => {
+        this.redrawBattleBox(this.boxBounds);
+      },
+      onComplete: () => {
+        this.redrawBattleBox(BattleScene.ATTACK_BOX_BOUNDS);
+        this.turnManager.startEnemyAttack();
+      },
+    });
+  }
+
+  private getPatternFriendlyName(pattern: string): string {
+    const patternNames: Record<string, string> = {
+      froggit_hops: 'Saltos Rápidos de Sapo',
+      froggit_flies: 'Moscas Giratórias',
+      bone_slider: 'Onda Rasteira de Ossos',
+      blue_attack: 'Ataque Azul (Imobilidade Obrigatória)',
+      bone_wave: 'Muralha de Ossos Cadenciada',
+      chaos_stars: 'Chuva de Estrelas em Espiral',
+      spinning_cards: 'Cartas Giratórias Cortantes',
+      laser_cross: 'Cruz de Feixes Laser',
+      dummy_still: 'Imobilidade Silenciosa',
+    };
+    return patternNames[pattern] || pattern;
   }
 
   private showEnemySpeech(text: string) {
     this.enemySpeechText.setText(text);
     this.enemySpeechBubble.setVisible(true);
     soundManager.playVoiceBlip('monster');
+
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'enemy',
+      actionType: 'dialogue',
+      actor: this.enemyData.name,
+      title: `Fala de ${this.enemyData.name}`,
+      description: `"${text}"`,
+      reaction: `${this.enemyData.name} se posiciona para a ofensiva.`,
+    });
   }
 
   private hideEnemySpeech() {
     this.enemySpeechBubble.setVisible(false);
   }
 
-  // --- 5. ENEMY ATTACK & BULLET HELL PHASE ---
-  private startEnemyTurn() {
-    this.currentPhase = 'ENEMY_ATTACK';
-    this.narrativeText.setVisible(false);
-    this.soulCursor.setVisible(false);
-    this.hideEnemySpeech(); // V.0.0.2-H6.1: Guarantee dialogue bubble is hidden during dodging
-    this.bullets = [];
+  // --- 5. ENEMY BULLET HELL ATTACK PHASE ---
+  private executeAttackWaveSequence(pattern: string, durationMs: number) {
+    this.turnManager.transitionTo('ENEMY_ATTACK');
+    this.clearBullets();
     this.attackTimer = 0;
+    this.attackDuration = durationMs;
 
-    const randomLine =
-      this.enemyData.dialogueLines[
-        Math.floor(Math.random() * this.enemyData.dialogueLines.length)
-      ];
-    this.showEnemySpeech(randomLine);
-
-    this.time.delayedCall(1000, () => {
-      this.hideEnemySpeech();
-
-      // Smoothly resize box to bullet-hell arena
-      this.tweens.add({
-        targets: this.boxBounds,
-        x: this.attackBoxBounds.x,
-        y: this.attackBoxBounds.y,
-        w: this.attackBoxBounds.w,
-        h: this.attackBoxBounds.h,
-        duration: 300,
-        ease: 'Cubic.easeOut',
-        onUpdate: () => {
-          this.redrawBattleBox(this.boxBounds);
-        },
-        onComplete: () => {
-          this.soulPlayable.setPosition(
-            this.attackBoxBounds.x + this.attackBoxBounds.w / 2,
-            this.attackBoxBounds.y + this.attackBoxBounds.h / 2
-          );
-          this.soulPlayable.setVisible(true);
-          this.spawnAttackWave();
-        },
-      });
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'enemy',
+      actionType: 'attack_pattern',
+      actor: this.enemyData.name,
+      title: `Ataque Mágico: ${this.getPatternFriendlyName(pattern)}`,
+      description: `${this.enemyData.name} conjurou magia no tabuleiro de esquiva!`,
+      reaction:
+        pattern === 'blue_attack'
+          ? `AVISO: Ataque Azul detectado! Fique completamente PARADO para não receber dano!`
+          : `Controle a Alma vermelha (♥) para esquivar dos projéteis!`,
     });
-  }
 
-  private spawnAttackWave() {
-    const pattern =
-      this.enemyData.bulletPatterns[
-        Math.floor(Math.random() * this.enemyData.bulletPatterns.length)
-      ];
+    // Spawn Waves based on pattern
+    if (pattern === 'dummy_still') {
+      this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
+      this.soulPlayable.setVisible(false);
+      this.narrativeText.setVisible(true);
+      this.narrativeText.setText('* O Manequim permanece imóvel na sua frente.');
+      const timer = this.time.delayedCall(1600, () => {
+        if (this.turnManager.getPhase() === 'ENEMY_ATTACK') {
+          this.turnManager.endEnemyAttack();
+        }
+      });
+      this.turnManager.registerCleanup(() => timer.remove(false));
+      return;
+    }
+
+    // Reposition and show Playable Red SOUL at center of attack box
+    this.soulPlayable.setPosition(
+      BattleScene.ATTACK_BOX_BOUNDS.x + BattleScene.ATTACK_BOX_BOUNDS.w / 2,
+      BattleScene.ATTACK_BOX_BOUNDS.y + BattleScene.ATTACK_BOX_BOUNDS.h / 2
+    );
+    this.soulPlayable.setVisible(true);
+
+    if (this.enemyData.id === 'deltajester' || this.enemyData.id === 'sir_ossos') {
+      triggerScreenShake(this, 'light');
+    }
 
     if (pattern === 'froggit_hops' || pattern === 'froggit_flies') {
       for (let i = 0; i < 6; i++) {
-        this.time.delayedCall(i * 850, () => {
-          if (this.currentPhase !== 'ENEMY_ATTACK') return;
+        const timer = this.time.delayedCall(i * 850, () => {
+          if (this.isCleaningUp || !this.turnManager || this.turnManager.getPhase() !== 'ENEMY_ATTACK') return;
           const fromLeft = Math.random() > 0.5;
           const fly = this.add.sprite(
             fromLeft ? this.boxBounds.x + 10 : this.boxBounds.x + this.boxBounds.w - 10,
@@ -855,11 +1136,12 @@ export class BattleScene extends Phaser.Scene {
             type: 'normal',
           });
         });
+        this.turnManager.registerCleanup(() => timer.remove(false));
       }
     } else if (pattern === 'bone_slider' || pattern === 'bone_wave') {
       for (let i = 0; i < 5; i++) {
-        this.time.delayedCall(i * 1050, () => {
-          if (this.currentPhase !== 'ENEMY_ATTACK') return;
+        const timer = this.time.delayedCall(i * 1050, () => {
+          if (this.isCleaningUp || !this.turnManager || this.turnManager.getPhase() !== 'ENEMY_ATTACK') return;
           const bone = this.add.sprite(
             this.boxBounds.x + this.boxBounds.w + 10,
             this.boxBounds.y + this.boxBounds.h - 18,
@@ -873,10 +1155,12 @@ export class BattleScene extends Phaser.Scene {
             type: 'normal',
           });
         });
+        this.turnManager.registerCleanup(() => timer.remove(false));
       }
     } else if (pattern === 'blue_attack') {
-      this.time.delayedCall(400, () => {
-        if (this.currentPhase !== 'ENEMY_ATTACK') return;
+      triggerScreenShake(this, 'medium');
+      const timer = this.time.delayedCall(400, () => {
+        if (this.isCleaningUp || !this.turnManager || this.turnManager.getPhase() !== 'ENEMY_ATTACK') return;
         const blueBone = this.add.sprite(
           this.boxBounds.x + this.boxBounds.w + 10,
           this.boxBounds.y + this.boxBounds.h / 2,
@@ -890,10 +1174,12 @@ export class BattleScene extends Phaser.Scene {
           type: 'blue',
         });
       });
+      this.turnManager.registerCleanup(() => timer.remove(false));
     } else {
+      // Delta Jester / Star burst
       for (let i = 0; i < 8; i++) {
-        this.time.delayedCall(i * 650, () => {
-          if (this.currentPhase !== 'ENEMY_ATTACK') return;
+        const timer = this.time.delayedCall(i * 650, () => {
+          if (this.isCleaningUp || !this.turnManager || this.turnManager.getPhase() !== 'ENEMY_ATTACK') return;
           const angle = Math.random() * Math.PI * 2;
           const star = this.add.sprite(
             this.boxBounds.x + this.boxBounds.w / 2 + Math.cos(angle) * 110,
@@ -908,11 +1194,23 @@ export class BattleScene extends Phaser.Scene {
             type: 'normal',
           });
         });
+        this.turnManager.registerCleanup(() => timer.remove(false));
       }
     }
   }
 
   private handleBulletHell(_: number, delta: number) {
+    if (
+      this.isCleaningUp ||
+      !this.turnManager ||
+      !this.turnManager.isBulletHellActive() ||
+      !this.soulPlayable ||
+      !this.soulPlayable.active
+    ) {
+      this.clearBullets();
+      return;
+    }
+
     this.attackTimer += delta;
 
     let vx = 0;
@@ -958,8 +1256,18 @@ export class BattleScene extends Phaser.Scene {
       this.soulPlayable.setAlpha(1);
     }
 
+    // Bullets movement & collision
     for (let i = this.bullets.length - 1; i >= 0; i--) {
+      if (!this.turnManager || !this.turnManager.isBulletHellActive()) {
+        break;
+      }
+
       const b = this.bullets[i];
+      if (!b || !b.sprite || !b.sprite.active) {
+        this.bullets.splice(i, 1);
+        continue;
+      }
+
       b.sprite.x += b.vx * (delta / 1000);
       b.sprite.y += b.vy * (delta / 1000);
 
@@ -972,10 +1280,22 @@ export class BattleScene extends Phaser.Scene {
 
       if (dist < 14 && this.invincibilityTimer <= 0) {
         if (b.type === 'blue' && !isSoulMoving) {
-          // Blue attack dodged
+          // Standing still successfully dodges blue attacks!
         } else {
           this.handleSoulHit();
+          if (
+            !this.turnManager ||
+            !this.turnManager.isBulletHellActive() ||
+            this.bullets.length === 0
+          ) {
+            break;
+          }
         }
+      }
+
+      if (!b || !b.sprite || !b.sprite.active) {
+        this.bullets.splice(i, 1);
+        continue;
       }
 
       if (
@@ -984,13 +1304,18 @@ export class BattleScene extends Phaser.Scene {
         b.sprite.y < this.boxBounds.y - 40 ||
         b.sprite.y > this.boxBounds.y + this.boxBounds.h + 40
       ) {
-        b.sprite.destroy();
+        try {
+          b.sprite.destroy();
+        } catch {
+          // ignore
+        }
         this.bullets.splice(i, 1);
       }
     }
 
-    if (this.attackTimer >= this.attackDuration) {
-      this.endEnemyTurn();
+    // Check attack wave completion
+    if (this.attackTimer >= this.attackDuration && this.turnManager && this.turnManager.isBulletHellActive()) {
+      this.turnManager.endEnemyAttack();
     }
   }
 
@@ -1001,65 +1326,113 @@ export class BattleScene extends Phaser.Scene {
     const isDead = gameState.takeDamage(this.enemyData.atk);
     this.refreshHUD();
 
-    this.cameras.main.shake(150, 0.015);
+    const stats = gameState.getStats();
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'enemy',
+      actionType: 'damage',
+      actor: this.enemyData.name,
+      title: `Alma Atingida! (-${this.enemyData.atk} HP)`,
+      description: `Sua Alma (♥) colidiu com um projétil de ${this.enemyData.name}!`,
+      reaction: isDead
+        ? `Sua Alma se partiu... DETERMINAÇÃO é necessária!`
+        : `Você sofreu ${this.enemyData.atk} de dano. HP atual: ${stats.hp}/${stats.maxHp}.`,
+      statsChange: { hpChange: -this.enemyData.atk },
+    });
+
+    const isBoss = this.enemyData.id === 'sir_ossos' || this.enemyData.id === 'deltajester';
+    if (isBoss) {
+      triggerScreenShake(this, 'boss_hit');
+    } else {
+      const isHeavyHit = this.enemyData.atk >= 7 || stats.hp <= 6;
+      triggerScreenShake(this, isHeavyHit ? 'heavy' : 'medium');
+    }
 
     if (isDead) {
+      this.turnManager.triggerGameOver();
       this.handleGameOver();
     }
   }
 
-  private endEnemyTurn() {
-    this.bullets.forEach((b) => b.sprite.destroy());
+  private clearBullets() {
+    if (this.bullets && this.bullets.length > 0) {
+      this.bullets.forEach((b) => {
+        try {
+          if (b && b.sprite && b.sprite.destroy) {
+            b.sprite.destroy();
+          }
+        } catch {
+          // ignore
+        }
+      });
+    }
     this.bullets = [];
+  }
+
+  private cleanupEnemyAttackWave() {
+    this.clearBullets();
     this.soulPlayable.setVisible(false);
 
-    // Expand box back to default wide menu size
+    this.tweens.killTweensOf(this.boxBounds);
+
+    // If box is already at default dimensions (e.g. dummy fight)
+    if (Math.abs(this.boxBounds.w - BattleScene.DEFAULT_BOX_BOUNDS.w) < 5) {
+      this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
+      this.turnManager.advanceToNextPlayerTurn();
+      return;
+    }
+
+    // Expand box back smoothly to wide default bounds
     this.tweens.add({
       targets: this.boxBounds,
-      x: this.defaultBoxBounds.x,
-      y: this.defaultBoxBounds.y,
-      w: this.defaultBoxBounds.w,
-      h: this.defaultBoxBounds.h,
+      x: BattleScene.DEFAULT_BOX_BOUNDS.x,
+      y: BattleScene.DEFAULT_BOX_BOUNDS.y,
+      w: BattleScene.DEFAULT_BOX_BOUNDS.w,
+      h: BattleScene.DEFAULT_BOX_BOUNDS.h,
       duration: 300,
       ease: 'Cubic.easeOut',
       onUpdate: () => {
         this.redrawBattleBox(this.boxBounds);
       },
       onComplete: () => {
-        this.currentPhase = 'MENU_MAIN';
-        this.isInputLocked = false; // V.0.0.2-SC.1: Turn returned to player, unlock keys!
-        this.narrativeText.setVisible(true);
-        this.narrativeText.setText(
-          this.enemyData.canSpare
-            ? `* ${this.enemyData.name} parece pronto para ser poupado!`
-            : `* ${this.enemyData.name} ainda está cheio de energia.`
-        );
-        this.updateButtonSoulPosition();
+        this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
+        // Increment turn count and return control to player!
+        this.turnManager.advanceToNextPlayerTurn();
       },
     });
   }
 
   // --- 6. OUTCOMES (DEFEAT / SPARE / FLEE / GAME OVER) ---
   private handleEnemyDefeated() {
-    this.currentPhase = 'VICTORY';
-    this.isInputLocked = true;
     soundManager.stopMusic();
+    this.clearBullets();
 
-    this.tweens.add({
-      targets: this.enemySprite,
-      alpha: 0,
-      y: this.enemySprite.y + 20,
-      duration: 1000,
-      onComplete: () => {
-        this.enemySprite.destroy();
-      },
+    // Visceral monster dust disintegration particle explosion!
+    spawnMonsterDustExplosion(this, {
+      enemySprite: this.enemySprite,
+      enemyId: this.enemyData.id,
     });
 
     gameState.recordVictory(false);
+    gameState.recordEnemyOutcome(this.enemyData.id, 'defeated');
     gameState.setFlag(`enemy_defeated_${this.enemyData.id}`, true);
     gameState.setFlag(`enemy_resolved_${this.enemyData.id}`, true);
+    if (this.enemyData.id === 'dummy') {
+      gameState.setFlag('dummy_practiced', true);
+      gameState.setFlag('dummy_defeated', true);
+    }
     const rewards = gameState.addRewards(this.enemyData.expReward, this.enemyData.goldReward);
     this.refreshHUD();
+
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'system',
+      actionType: 'defeated',
+      actor: 'Sistema',
+      title: `Vitória: ${this.enemyData.name} Derrotado!`,
+      description: `${this.enemyData.name} sucumbiu ao confronto e se dispersou em poeira.`,
+      reaction: `Recompensas concedidas: +${this.enemyData.expReward} EXP, +${this.enemyData.goldReward}G!`,
+    });
 
     let msg = `* VOCÊ VENCEU!\n* Ganhou ${this.enemyData.expReward} EXP e ${this.enemyData.goldReward} Ouro.`;
     if (rewards.leveledUp) {
@@ -1067,22 +1440,41 @@ export class BattleScene extends Phaser.Scene {
       msg += `\n* SEU LOVE AUMENTOU PARA LV ${rewards.newLv}!`;
     }
 
+    this.narrativeText.setVisible(true);
     this.narrativeText.setText(msg);
 
-    this.time.delayedCall(2800, () => {
-      this.scene.start('OverworldScene');
+    this.victoryReturnTimer = this.time.delayedCall(2800, () => {
+      this.returnToOverworld();
     });
   }
 
   private handleEnemySpared() {
-    this.currentPhase = 'VICTORY';
-    this.isInputLocked = true;
     soundManager.playSpare();
+    this.clearBullets();
+
     gameState.recordVictory(true);
+    gameState.recordEnemyOutcome(this.enemyData.id, 'spared');
     gameState.setFlag(`enemy_spared_${this.enemyData.id}`, true);
     gameState.setFlag(`enemy_resolved_${this.enemyData.id}`, true);
+    if (this.enemyData.id === 'dummy') {
+      gameState.setFlag('dummy_practiced', true);
+      gameState.setFlag('dummy_spared', true);
+    }
     gameState.addRewards(0, this.enemyData.goldReward);
     this.refreshHUD();
+
+    // Peaceful sparkles on spare
+    spawnMercySparkles(this, this.enemySprite);
+
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'player',
+      actionType: 'spared',
+      actor: gameState.getStats().name,
+      title: `Vitória Pacífica: Poupou ${this.enemyData.name}!`,
+      description: `Você estendeu a mão em pacifismo sincero e compaixão.`,
+      reaction: `${this.enemyData.name} aceitou a paz com gratidão e se despediu amigavelmente! Ganhou ${this.enemyData.goldReward}G.`,
+    });
 
     this.clearSubMenuItems();
     this.narrativeText.setVisible(true);
@@ -1096,40 +1488,128 @@ export class BattleScene extends Phaser.Scene {
       duration: 1200,
     });
 
-    this.time.delayedCall(2800, () => {
-      this.scene.start('OverworldScene');
+    this.victoryReturnTimer = this.time.delayedCall(2800, () => {
+      this.returnToOverworld();
     });
   }
 
   private handleFlee() {
-    this.isInputLocked = true;
     soundManager.playMenuMove();
+    this.clearBullets();
     this.clearSubMenuItems();
     this.narrativeText.setVisible(true);
     this.narrativeText.setText('* Você escapou em segurança!');
 
-    this.time.delayedCall(1400, () => {
-      this.scene.start('OverworldScene');
+    gameState.recordEnemyOutcome(this.enemyData.id, 'fled');
+    if (this.enemyData.id === 'dummy') {
+      gameState.setFlag('dummy_practiced', true);
+      gameState.setFlag('dummy_fled', true);
+    }
+
+    combatLogManager.addEntry({
+      turn: this.turnManager.getTurnNumber(),
+      source: 'player',
+      actionType: 'fled',
+      actor: gameState.getStats().name,
+      title: `Fuga do Combate`,
+      description: `Você correu velozmente para longe do confronto!`,
+      reaction: `${this.enemyData.name} ficou para trás enquanto você escapava pelas Ruínas.`,
+    });
+
+    this.victoryReturnTimer = this.time.delayedCall(1400, () => {
+      this.returnToOverworld();
     });
   }
 
-  // V.0.0.2-5S.1: Route to dedicated GameOverScene
+  private victoryReturnTimer: Phaser.Time.TimerEvent | null = null;
+
+  private handleVictoryInput(force: boolean = false) {
+    const confirm =
+      force ||
+      Phaser.Input.Keyboard.JustDown(this.wasd.Z) ||
+      Phaser.Input.Keyboard.JustDown(this.wasd.ENTER);
+
+    if (confirm) {
+      this.returnToOverworld();
+    }
+  }
+
+  private returnToOverworld() {
+    if (this.victoryReturnTimer) {
+      this.victoryReturnTimer.remove(false);
+      this.victoryReturnTimer = null;
+    }
+
+    // Flash "THE COLORS OF RESILIENCE" during transition back to overworld
+    const overlay = this.add.rectangle(320, 240, 640, 480, 0x000000, 1);
+    overlay.setDepth(500);
+    overlay.setAlpha(0);
+
+    const textContainer = this.add.container(320, 240);
+    textContainer.setDepth(501);
+    textContainer.setAlpha(0);
+
+    const heart = this.add.text(0, -20, '♥', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '12px',
+      color: '#e74c3c',
+    });
+    heart.setOrigin(0.5);
+    textContainer.add(heart);
+
+    const showSecretCode = Math.random() < 0.5;
+    const transitionMessage = showSecretCode ? '007474' : 'THE COLORS OF RESILIENCE';
+    const glowColor = showSecretCode ? '#00e5ff' : '#ffdd59';
+
+    const phrase = this.add.text(0, 4, transitionMessage, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: showSecretCode ? '13px' : '11px',
+      color: '#ffffff',
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: glowColor,
+        blur: 8,
+        stroke: true,
+        fill: true,
+      },
+    });
+    phrase.setOrigin(0.5);
+    textContainer.add(phrase);
+
+    this.tweens.add({
+      targets: [overlay, textContainer],
+      alpha: 1,
+      duration: 160,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        this.time.delayedCall(360, () => {
+          this.scene.start('OverworldScene');
+        });
+      },
+    });
+  }
+
   private handleGameOver() {
-    this.currentPhase = 'GAME_OVER';
-    this.isInputLocked = true;
     soundManager.stopMusic();
-    this.bullets.forEach((b) => b.sprite.destroy());
-    this.bullets = [];
+    this.clearBullets();
 
     this.time.delayedCall(400, () => {
       this.scene.start('GameOverScene');
     });
   }
 
+  // --- 7. VIRTUAL CONTROLLER SUPPORT ---
   private handleVirtualAction(action: string) {
-    if (this.isInputLocked) return; // V.0.0.2-SC.1
+    if (action === 'Z' && this.turnManager.getPhase() === 'VICTORY') {
+      this.handleVictoryInput(true);
+      return;
+    }
 
-    if (this.currentPhase === 'MENU_MAIN') {
+    if (!this.turnManager.isInputAllowed()) return;
+    const phase = this.turnManager.getPhase();
+
+    if (phase === 'PLAYER_MENU') {
       if (action === 'LEFT') {
         this.selectedButtonIndex = (this.selectedButtonIndex - 1 + 4) % 4;
         this.updateButtonSoulPosition();
@@ -1139,11 +1619,7 @@ export class BattleScene extends Phaser.Scene {
       } else if (action === 'Z') {
         this.confirmMainMenuSelection();
       }
-    } else if (
-      this.currentPhase === 'MENU_ACT' ||
-      this.currentPhase === 'MENU_ITEM' ||
-      this.currentPhase === 'MENU_MERCY'
-    ) {
+    } else if (phase === 'PLAYER_SUBMENU') {
       if (action === 'UP' || action === 'LEFT') {
         this.selectedSubMenuIndex =
           (this.selectedSubMenuIndex - 1 + this.subMenuItems.length) % this.subMenuItems.length;
@@ -1156,12 +1632,173 @@ export class BattleScene extends Phaser.Scene {
       } else if (action === 'X') {
         this.returnToMainMenu();
       }
-    } else if (this.currentPhase === 'TARGET_FIGHT') {
+    } else if (phase === 'PLAYER_TARGET') {
       if (action === 'Z') {
         this.targetMoving = false;
-        this.isInputLocked = true;
         this.executePlayerAttack(this.targetBarX);
+      }
+    } else if (phase === 'ENEMY_DIALOGUE') {
+      if (action === 'Z') {
+        this.advanceFromDialogueToAttack();
       }
     }
   }
+
+  // --- LIFECYCLE & TEARDOWN MANAGEMENT ---
+  public shutdown(): void {
+    this.cleanupFullSceneLifecycle();
+  }
+
+  public destroy(): void {
+    this.cleanupFullSceneLifecycle();
+  }
+
+  private cleanupFullSceneLifecycle(): void {
+    if (this.isCleaningUp) return;
+    this.isCleaningUp = true;
+
+    try {
+      // 1. Destroy turn manager, halt pending turn transitions and clear callbacks
+      if (this.turnManager) {
+        this.turnManager.destroy();
+      }
+
+      // 2. Kill all active tweens (animations, speech bubble pops, screen shakes)
+      if (this.tweens) {
+        this.tweens.killAll();
+      }
+
+      // 3. Clear all timers and scheduled calls
+      if (this.dialogueTimerEvent) {
+        this.dialogueTimerEvent.remove(false);
+        this.dialogueTimerEvent = null;
+      }
+      if (this.victoryReturnTimer) {
+        this.victoryReturnTimer.remove(false);
+        this.victoryReturnTimer = null;
+      }
+      if (this.time) {
+        this.time.removeAllEvents();
+      }
+
+      // 4. Clear active projectiles and sub-menus
+      this.clearBullets();
+      this.clearSubMenuItems();
+
+      // 5. Destroy bottom action buttons and their containers
+      if (this.buttons && this.buttons.length > 0) {
+        this.buttons.forEach((btn) => {
+          try {
+            btn.label?.destroy();
+            btn.container?.destroy(true);
+          } catch {
+            // ignore
+          }
+        });
+        this.buttons = [];
+      }
+
+      // 6. Destroy enemy speech bubble and text
+      try {
+        if (this.enemySpeechText) {
+          this.enemySpeechText.destroy();
+        }
+      } catch {
+        // ignore
+      }
+      try {
+        if (this.enemySpeechBubble) {
+          this.enemySpeechBubble.destroy(true);
+        }
+      } catch {
+        // ignore
+      }
+
+      // 7. Destroy target meter
+      try {
+        if (this.targetBarLine) {
+          this.targetBarLine.destroy();
+        }
+      } catch {
+        // ignore
+      }
+      try {
+        if (this.targetMeterContainer) {
+          this.targetMeterContainer.destroy(true);
+        }
+      } catch {
+        // ignore
+      }
+
+      // 8. Destroy narrative text, turn indicator, arena box, and souls
+      try {
+        this.narrativeText?.destroy();
+      } catch {}
+      try {
+        this.turnIndicatorText?.destroy();
+      } catch {}
+      try {
+        this.battleBox?.destroy();
+      } catch {}
+      try {
+        this.soulPlayable?.destroy();
+      } catch {}
+      try {
+        this.soulCursor?.destroy();
+      } catch {}
+      try {
+        this.enemySprite?.destroy();
+      } catch {}
+
+      // 9. Destroy HUD elements
+      try {
+        this.nameText?.destroy();
+      } catch {}
+      try {
+        this.lvText?.destroy();
+      } catch {}
+      try {
+        this.hpText?.destroy();
+      } catch {}
+      try {
+        this.hpBarBg?.destroy();
+      } catch {}
+      try {
+        this.hpBarFill?.destroy();
+      } catch {}
+
+      // 10. Destroy all remaining display objects in the scene graph to prevent ghost dialogue boxes or visual artifacts
+      if (this.children) {
+        this.children.removeAll(true);
+      }
+
+      // 11. Remove all input listeners and registered keys
+      if (this.input) {
+        if (this.input.keyboard) {
+          this.input.keyboard.removeAllKeys();
+        }
+        this.input.removeAllListeners();
+      }
+
+      // 12. Unregister custom event listeners on the scene
+      if (this.events) {
+        this.events.off('virtual_action', this.handleVirtualAction, this);
+      }
+
+      // 13. Reset internal state variables
+      this.targetMoving = false;
+      this.targetBarX = 0;
+      this.attackTimer = 0;
+      this.invincibilityTimer = 0;
+      this.selectedButtonIndex = 0;
+      this.selectedSubMenuIndex = 0;
+      this.bullets = [];
+      this.subMenuItems = [];
+      this.buttons = [];
+      this.boxBounds = { ...BattleScene.DEFAULT_BOX_BOUNDS };
+    } finally {
+      this.isCleaningUp = false;
+    }
+  }
 }
+

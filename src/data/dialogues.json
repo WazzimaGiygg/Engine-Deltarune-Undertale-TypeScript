@@ -145,27 +145,32 @@
     "altDialogueId": "toriel_repeat",
     "pages": [
       {
-        "text": "* Bem-vindo ao seu novo lar, pequenino!",
+        "text": "* Bem-vindo ao seu novo lar, pequeno inocente!",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Permita-me educá-lo sobre o funcionamento das RUÍNAS.",
+        "text": "* Permita-me instruí-lo no funcionamento das RUÍNAS.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* As Ruínas estão repletas de quebra-cabeças antigos — fusões arcaicas entre diversões e trancas de portas.",
+        "text": "* As RUÍNAS estão repletas de quebra-cabeças... antigas fusões entre passatempos e trancas de portas.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Para passar de uma sala à outra, você deve desvendá-los.",
+        "text": "* É preciso resolvê-los para passar de uma sala a outra.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Por favor, acostume-se à visão deles. Venha, vou demonstrar o primeiro logo adiante!",
+        "text": "* Por favor, acostume-se à visão deles. Venha, vou demonstrar o primeiro logo à frente!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Siga-me, minha criança!",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       }
@@ -174,21 +179,47 @@
       "setFlag": "toriel_entrance_cutscene"
     }
   },
-  "toriel_switch_advice": {
-    "id": "toriel_switch_advice",
+  "toriel_switch_intro": {
+    "id": "toriel_switch_intro",
     "speaker": "Toriel",
     "defaultVoice": "toriel",
     "defaultPortrait": "portrait_toriel_normal",
-    "conditionFlag": "switch_toriel_labeled",
-    "altDialogueId": "toriel_switch_solved",
     "pages": [
       {
-        "text": "* Para avançar nesta sala, você precisa ativar os interruptores corretos na parede.",
+        "text": "* Para avançar nesta sala, você precisa acionar os interruptores corretos na parede.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Não se preocupe! Eu rotulei claramente com bilhetinhos aqueles que você precisa acionar.",
+        "text": "* Não se preocupe! Eu etiquetei claramente com bilhetinhos em giz aqueles que você deve acionar.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Vá em frente, aperte apenas o interruptor que marquei para você!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "toriel_switch_intro_spoken"
+    }
+  },
+  "toriel_switch_advice": {
+    "id": "toriel_switch_advice",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "conditionFlag": "switch_toriel_labeled",
+    "altDialogueId": "toriel_switch_solved",
+    "pages": [
+      {
+        "text": "* Não tenha pressa, minha criança.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Vá até a parede à esquerda e aperte o interruptor que marquei com giz para você!",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       }
@@ -201,12 +232,22 @@
     "defaultPortrait": "portrait_toriel_warm",
     "pages": [
       {
-        "text": "* Esplêndido! Você é uma criança muito inteligente e aplicada!",
+        "text": "* Esplêndido! Eu estou tão orgulhosa de você, minha criança!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Você é um humano muito inteligente e rápido no raciocínio!",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       },
       {
         "text": "* Venha, vamos para a próxima câmara das Ruínas!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Siga-me!",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       }
@@ -234,21 +275,24 @@
       }
     ]
   },
-  "toriel_dummy_advice": {
-    "id": "toriel_dummy_advice",
+  "toriel_dummy_intro": {
+    "id": "toriel_dummy_intro",
     "speaker": "Toriel",
     "defaultVoice": "toriel",
     "defaultPortrait": "portrait_toriel_normal",
-    "conditionFlag": "dummy_practiced",
-    "altDialogueId": "toriel_dummy_solved",
     "pages": [
       {
-        "text": "* Como um humano vivendo no Subterrâneo, outros monstros podem atacá-lo pelo caminho.",
+        "text": "* Como um humano vivendo no SUBTERRÂNEO, outros monstros podem atacá-lo pelo caminho.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Porém, não se preocupe! O processo é simples.",
+        "text": "* Você precisa estar preparado para essa situação.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* No entanto, não se preocupe! O processo é simples.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
@@ -258,73 +302,138 @@
         "voice": "toriel"
       },
       {
-        "text": "* Enquanto estiver em combate, apenas converse amigavelmente com [AGIR]. Ganhe tempo. Eu virei resolver o conflito!",
+        "text": "* Enquanto estiver em combate, apenas puxe uma conversa amigável com [AGIR]. Ganhe tempo. Eu virei resolver o conflito!",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       },
       {
-        "text": "* Pratique conversando com aquele manequim ali.",
+        "text": "* Vá em frente, pratique conversando com aquele manequim ali.",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       }
-    ]
+    ],
+    "onComplete": {
+      "setFlag": "toriel_dummy_intro_spoken"
+    }
   },
-  "toriel_dummy_solved": {
-    "id": "toriel_dummy_solved",
+  "toriel_dummy_advice": {
+    "id": "toriel_dummy_advice",
     "speaker": "Toriel",
     "defaultVoice": "toriel",
     "defaultPortrait": "portrait_toriel_warm",
     "pages": [
       {
-        "text": "* Ah, você é tão doce! Estou muito orgulhosa de sua conduta pacífica, minha criança.",
+        "text": "* Vá em frente, não seja tímido, minha criança!",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       },
       {
-        "text": "* Pode prosseguir pelas Ruínas quando estiver pronto. Estarei zelando por você!",
+        "text": "* Apenas aproxime-se do manequim e converse amigavelmente com ele usando o comando [AGIR].",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       }
     ]
   },
-  "dummy_practice": {
-    "id": "dummy_practice",
-    "speaker": "Narrador",
-    "defaultVoice": "monster",
-    "conditionFlag": "dummy_practiced",
-    "altDialogueId": "dummy_repeat",
+  "toriel_dummy_solved_pacifist": {
+    "id": "toriel_dummy_solved_pacifist",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
     "pages": [
       {
-        "text": "* Você se aproxima do Manequim de Treinamento de algodão.",
-        "portrait": null
-      },
-      {
-        "text": "* Você puxa assunto e diz um 'olá' carinhoso e gentil para ele...",
-        "portrait": null
-      },
-      {
-        "text": "* O manequim não parece muito falante, mas parece feliz com sua presença.",
-        "portrait": null
-      },
-      {
-        "text": "* Toriel assiste a tudo com um sorriso maternal radiante!",
+        "text": "* Ah, muito bem! Você é muito bom nisso.",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       },
       {
-        "text": "* Toriel: 'Ah, muito bom! Você é uma criança muito bondosa e gentil!'",
+        "text": "* Estou tão orgulhosa de ver tamanha bondade e paciência em seu coração, minha criança.",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       },
       {
-        "text": "* (Você venceu o treinamento! Ganhou 0 EXP e 0 de ouro. Seu coração se enche de DETERMINAÇÃO.)",
+        "text": "* Venha, segure minha mão com carinho! Vamos até a nossa casa!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "toriel_dummy_solved_violent": {
+    "id": "toriel_dummy_solved_violent",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "pages": [
+      {
+        "text": "* ... Ah.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Suponho que manequins tenham sido feitos para serem socados, afinal...",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Mas lembre-se: monstros no Subterrâneo têm sentimentos frágeis e podem se machucar com facilidade.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Venha, vamos juntos para a nossa casa. Por favor, seja prudente e gentil.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "toriel_dummy_solved_fled": {
+    "id": "toriel_dummy_solved_fled",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "pages": [
+      {
+        "text": "* ... Ah.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Você... fugiu de um manequim de algodão inanimado?",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Suponho que cautela e autopreservação sejam qualidades admiráveis em uma criança.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Venha, segure minha mão! Vamos juntos até a nossa casa!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "dummy_spared_dialogue": {
+    "id": "dummy_spared_dialogue",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* Um manequim de pano de algodão.\n* Não parece muito falante, mas parece satisfeito com o treinamento anterior.",
         "portrait": null
       }
-    ],
-    "onComplete": {
-      "setFlag": "dummy_practiced",
-      "restoreHp": true
-    }
+    ]
+  },
+  "dummy_defeated_dialogue": {
+    "id": "dummy_defeated_dialogue",
+    "speaker": "Narrador",
+    "defaultVoice": "monster",
+    "pages": [
+      {
+        "text": "* O manequim foi derrubado.\n* Tufos de algodão flutuam silenciosamente sobre as pedras antigas.",
+        "portrait": null
+      }
+    ]
   },
   "dummy_repeat": {
     "id": "dummy_repeat",
@@ -336,6 +445,29 @@
         "portrait": null
       }
     ]
+  },
+  "froggit_encounter": {
+    "id": "froggit_encounter",
+    "speaker": "Froggit",
+    "defaultVoice": "monster",
+    "defaultPortrait": "portrait_froggit",
+    "conditionFlag": "enemy_resolved_froggit",
+    "altDialogueId": "froggit_advice",
+    "pages": [
+      {
+        "text": "* Ribbit, ribbit!\n* (Froggit salta ansioso à sua frente nas Ruínas!)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      },
+      {
+        "text": "* (Ele quer testar suas habilidades e agilidade contra os ataques do Subterrâneo!)",
+        "portrait": "portrait_froggit",
+        "voice": "monster"
+      }
+    ],
+    "onComplete": {
+      "startBattle": "froggit"
+    }
   },
   "froggit_advice": {
     "id": "froggit_advice",
@@ -451,12 +583,26 @@
       "setFlag": "read_delta_rune"
     }
   },
-  "sign_ruins_intro": {
-    "id": "sign_ruins_intro",
-    "speaker": "Placa Antiga",
+  "leaves_ruins_entrance": {
+    "id": "leaves_ruins_entrance",
+    "speaker": "Narrador",
     "pages": [
       {
-        "text": "* 'Apenas os determinados podem desvendar os mistérios do Subterrâneo.'",
+        "text": "* Folhas caídas de outono, aconchegantes e crocantes.",
+        "portrait": null
+      },
+      {
+        "text": "* O aroma agradável de folhas caídas enche você de DETERMINAÇÃO.",
+        "portrait": null
+      }
+    ]
+  },
+  "sign_ruins_intro": {
+    "id": "sign_ruins_intro",
+    "speaker": "Placa de Pedra",
+    "pages": [
+      {
+        "text": "* 'Apenas os destemidos podem prosseguir.'\n* 'Bravos, tolos. Ambos não seguem o caminho do meio.'",
         "portrait": null
       }
     ]
@@ -578,5 +724,426 @@
     "onComplete": {
       "startBattle": "deltajester"
     }
+  },
+  "toriel_independence_test": {
+    "id": "toriel_independence_test",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "conditionFlag": "toriel_phone_given",
+    "altDialogueId": "toriel_hall_wait",
+    "pages": [
+      {
+        "text": "* Você se saiu excepcionalmente bem até aqui, minha criança!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Porém, agora tenho um teste difícil para você.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Eu preciso resolver alguns assuntos importantes adiante no meu lar.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Por favor, pegue este Telefone Celular. O meu número já está gravado nele!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Se você precisar de qualquer coisa, ou se estiver com medo, basta discar para mim!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Fique em segurança aqui enquanto termino as preparações, minha criança. Voltarei em breve!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "toriel_phone_given",
+      "giveItem": "cell_phone",
+      "restoreHp": true
+    }
+  },
+  "toriel_hall_wait": {
+    "id": "toriel_hall_wait",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Não hesite em me ligar pelo celular se sentir qualquer dúvida, minha criança!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Eu sempre estarei lá para cuidar de você.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "save_long_hall": {
+    "id": "save_long_hall",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* Saber que um dia você poderá andar com segurança e determinação pelas Ruínas enche você de DETERMINAÇÃO.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_house_welcome": {
+    "id": "toriel_house_welcome",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Ah! Minha criança!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Olhe só, chegamos! Esta é a nossa casa. É aconchegante, não acha?",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Não há nenhum arranhão em você... Que grande alívio!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Eu estava preparando uma surpresa especial para você... Uma deliciosa torta de caramelo e canela!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Venha, entre! Seja muito bem-vindo ao seu novo lar!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "toriel_house_repeat": {
+    "id": "toriel_house_repeat",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Fique à vontade para descansar no seu quarto quando quiser, minha criança!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* A torta já está quase pronta no forno. Sinta-se em casa!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "sign_toriel_door": {
+    "id": "sign_toriel_door",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* A porta de carvalho da casa de Toriel.\n* O aroma doce e reconfortante de torta quente de caramelo e canela escapa suavemente pelas frestas de madeira.",
+        "portrait": null
+      }
+    ]
+  },
+  "sign_bare_tree": {
+    "id": "sign_bare_tree",
+    "speaker": "Narrador",
+    "pages": [
+      {
+        "text": "* Uma imponente árvore antiga de galhos negros e desfolhados.\n* Suas raízes profundas descansam sob um tapete espesso de folhas avermelhadas de outono.",
+        "portrait": null
+      }
+    ]
+  },
+  "save_toriel_house": {
+    "id": "save_toriel_house",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* A visão desta casa acolhedora sob as árvores ancestrais enche você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_house_interior_talk": {
+    "id": "toriel_house_interior_talk",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_warm",
+    "pages": [
+      {
+        "text": "* Bem-vindo ao seu novo lar, minha criança!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Eu preparei um quarto confortável só para você logo ali no corredor.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* E olhe só: deixei uma fatia quentinha da minha Torta de Caramelo e Canela para você no balcão da cozinha!",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Por favor, descanse um pouco... Você foi muito corajoso pelas Ruínas.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "save_toriel_interior": {
+    "id": "save_toriel_interior",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* O aroma caloroso de torta de caramelo e canela recém-assada e a sensação de um lar seguro enchem você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)",
+        "portrait": null
+      }
+    ]
+  },
+  "save_toriel_hallway": {
+    "id": "save_toriel_hallway",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* O silêncio reconfortante do corredor e a promessa de um sono tranquilo enchem você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)",
+        "portrait": null
+      }
+    ]
+  },
+  "save_toriel_basement": {
+    "id": "save_toriel_basement",
+    "speaker": "Ponto de Salvamento",
+    "pages": [
+      {
+        "text": "* O ar gélido vindo do fundo do corredor e a sensação iminente de liberdade enchem você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)",
+        "portrait": null
+      }
+    ]
+  },
+  "player_bedroom_door_sign": {
+    "id": "player_bedroom_door_sign",
+    "speaker": "Placa",
+    "pages": [
+      {
+        "text": "* Uma plaquinha de madeira com letras infantis entalhadas:\n* 'Quarto da Criança'.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_bedroom_door_sign": {
+    "id": "toriel_bedroom_door_sign",
+    "speaker": "Placa",
+    "pages": [
+      {
+        "text": "* Uma placa elegante de carvalho:\n* 'Quarto de Toriel'.",
+        "portrait": null
+      }
+    ]
+  },
+  "renovating_door_sign": {
+    "id": "renovating_door_sign",
+    "speaker": "Porta Trancada",
+    "pages": [
+      {
+        "text": "* A porta está firmemente trancada.\n* Há um bilhete colado com fita adesiva amarela:\n* 'Quarto em reformas! Não entrar, por favor. - Toriel ❤'",
+        "portrait": null
+      }
+    ]
+  },
+  "hallway_mirror": {
+    "id": "hallway_mirror",
+    "speaker": "Espelho",
+    "pages": [
+      {
+        "text": "* É você, Frisk!\n* Apesar de tudo que aconteceu, você continua sendo você.",
+        "portrait": null
+      }
+    ]
+  },
+  "player_lamp": {
+    "id": "player_lamp",
+    "speaker": "Luminária",
+    "pages": [
+      {
+        "text": "* Uma linda luminária artesanal em formato de flor dourada.\n* Ela emite um brilho âmbar suave e reconfortante.",
+        "portrait": null
+      }
+    ]
+  },
+  "player_toy_box": {
+    "id": "player_toy_box",
+    "speaker": "Caixa de Brinquedos",
+    "pages": [
+      {
+        "text": "* Uma caixa de brinquedos com cantos arredondados.\n* Dentro há blocos de madeira coloridos, fitas de cetim e sapatinhos velhos.",
+        "portrait": null
+      }
+    ]
+  },
+  "player_dresser": {
+    "id": "player_dresser",
+    "speaker": "Cômoda",
+    "pages": [
+      {
+        "text": "* Uma cômoda polida com carinho.\n* As gavetas contêm suéteres listrados e meias dobradas organizadamente.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_bed": {
+    "id": "toriel_bed",
+    "speaker": "Cama Grande",
+    "pages": [
+      {
+        "text": "* A cama de Toriel. É grande, macia e está impecavelmente arrumada com um edredom bordado.\n* É melhor não desarrumar os lençóis da Mamãe Toriel.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_joke_diary": {
+    "id": "toriel_joke_diary",
+    "speaker": "Diário de Piadas",
+    "pages": [
+      {
+        "text": "* O diário de piadas de Toriel está aberto sobre a mesinha:\n* 'Por que os esqueletos são tão calmos? Porque nada entra sob a pele deles!'",
+        "portrait": null
+      },
+      {
+        "text": "* Há um bilhete na margem com a letra de Toriel:\n* 'Haha! Eu contei essa piada para a porta das Ruínas e uma voz riu bastante do outro lado.'",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_wardrobe": {
+    "id": "toriel_wardrobe",
+    "speaker": "Guarda-Roupa",
+    "pages": [
+      {
+        "text": "* O armário de roupas de Toriel. Tem aroma suave de lavanda e flores secas.\n* Dentro há vários vestidos idênticos cor de vinho com o brasão do Delta Rune.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_snail_encyclopedia": {
+    "id": "toriel_snail_encyclopedia",
+    "speaker": "Estante de Livros",
+    "pages": [
+      {
+        "text": "* '72 Fatos Incríveis sobre Caracóis - Volume 2'.\n* Capítulo 3: 'Como acariciar a casca de um caracol sem deixá-lo tímido'.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_cactus": {
+    "id": "toriel_cactus",
+    "speaker": "Cacto",
+    "pages": [
+      {
+        "text": "* Um cacto pequenino em um vasinho vermelho.\n* É a planta mais independente do mundo. Não requer nada além de um olhar de afeto.",
+        "portrait": null
+      }
+    ]
+  },
+  "basement_stairs_sign": {
+    "id": "basement_stairs_sign",
+    "speaker": "Aviso",
+    "pages": [
+      {
+        "text": "* O ar frio sopra dos degraus de pedra que descem para a escuridão.\n* 'Abaixo jaz a saída das Ruínas. Aqueles que partem não podem retornar.'",
+        "portrait": null
+      }
+    ]
+  },
+  "ruins_exit_gate": {
+    "id": "ruins_exit_gate",
+    "speaker": "Portão das Ruínas",
+    "pages": [
+      {
+        "text": "* O Monumental Portão Púrpura das Ruínas.\n* Duas enormes portas de pedra antiga com o brasão do Delta Rune entalhado em alto relevo.",
+        "portrait": null
+      },
+      {
+        "text": "* Um vento gelado e misterioso sopra pelas frestas... Além deste portão repousa o vasto e desconhecido Subterrâneo.",
+        "portrait": null
+      }
+    ]
+  },
+  "toriel_basement_talk": {
+    "id": "toriel_basement_talk",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "conditionFlag": "toriel_basement_spoken",
+    "altDialogueId": "toriel_basement_repeat",
+    "pages": [
+      {
+        "text": "* Minha criança... Por que você desceu aqui?",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Por favor, suba de volta. Está muito frio e úmido aqui embaixo.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Você quer tanto assim voltar para a sua casa na superfície?",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Além desta porta... Há apenas perigos que você não compreende.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Asgore, o rei dos monstros... Ele não terá piedade. Se você passar por este portão, ele tirará a sua vida.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Eu prometi a mim mesma que protegeria você... Por favor, volte para cima. Nós podemos viver felizes juntos aqui.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "toriel_basement_spoken"
+    }
+  },
+  "toriel_basement_repeat": {
+    "id": "toriel_basement_repeat",
+    "speaker": "Toriel",
+    "defaultVoice": "toriel",
+    "defaultPortrait": "portrait_toriel_normal",
+    "pages": [
+      {
+        "text": "* Por favor, suba as escadas de volta para o calor da lareira, minha criança...",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Eu preparei um lar tão confortável para você lá em cima.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
   }
 }

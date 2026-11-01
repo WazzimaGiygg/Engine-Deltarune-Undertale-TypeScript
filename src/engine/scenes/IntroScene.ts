@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { soundManager } from '../../services/soundSynthesizer';
+import { gameState } from '../gameState';
 import { SpriteGenerator } from '../spriteGenerator';
 
 interface Slide {
@@ -60,8 +61,9 @@ export class IntroScene extends Phaser.Scene {
   }
 
   create() {
+    gameState.setActiveScene('IntroScene');
     SpriteGenerator.generateAllTextures(this);
-    soundManager.playMusic('overworld');
+    soundManager.playMusic('story_intro');
     this.currentSlideIndex = 0;
     this.secretBuffer = '';
 

@@ -18,8 +18,9 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    gameState.setActiveScene('TitleScene');
     SpriteGenerator.generateAllTextures(this);
-    soundManager.playMusic('overworld');
+    soundManager.playMusic('story_intro');
     this.secretBuffer = '';
 
     // Big Game Title

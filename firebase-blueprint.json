@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with authentication and settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email" },
+        "displayName": { "type": "string", "description": "Player display name" },
+        "photoURL": { "type": "string", "description": "Profile photo URL" },
+        "activeSlot": { "type": "number", "description": "Currently active save slot (1-3)" },
+        "createdAt": { "type": "string", "description": "Account creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      },
+      "required": ["id", "email"]
+    },
+    "PlayerSaveSlot": {
+      "title": "PlayerSaveSlot",
+      "description": "Player game state saved in the cloud for a specific slot",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "slot": { "type": "number", "description": "Slot index 1, 2, or 3" },
+        "roomName": { "type": "string", "description": "Human-readable name of the room" },
+        "currentRoom": { "type": "string", "description": "Internal room identifier" },
+        "positionX": { "type": "number", "description": "Player X coordinate" },
+        "positionY": { "type": "number", "description": "Player Y coordinate" },
+        "playtimeSeconds": { "type": "number", "description": "Playtime in seconds" },
+        "stats": { "type": "object", "description": "Player RPG stats (HP, LV, ATK, DEF, GOLD, etc.)" },
+        "flags": { "type": "object", "description": "Game narrative and progression flags" },
+        "visitedRooms": { "type": "array", "description": "Array of visited room IDs" },
+        "updatedAt": { "type": "string", "description": "Last save timestamp" }
+      },
+      "required": ["userId", "slot", "currentRoom"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Player score record displayed on the global ranking board",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "Player name or alias", "maxLength": 64 },
+        "photoURL": { "type": "string", "description": "Profile avatar URL" },
+        "score": { "type": "number", "description": "Calculated determination score" },
+        "lv": { "type": "number", "description": "Current LOVE Level" },
+        "exp": { "type": "number", "description": "Current EXP accumulated" },
+        "gold": { "type": "number", "description": "Current Gold accumulated" },
+        "kills": { "type": "number", "description": "Monsters defeated" },
+        "spares": { "type": "number", "description": "Monsters spared with mercy" },
+        "route": { "type": "string", "description": "Moral route (Pacifista, Neutro)", "maxLength": 32 },
+        "roomName": { "type": "string", "description": "Location reached", "maxLength": 64 },
+        "playtimeSeconds": { "type": "number", "description": "Total time played in seconds" },
+        "updatedAt": { "type": "string", "description": "Submission timestamp" }
+      },
+      "required": ["userId", "displayName", "score", "lv"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Authenticated user profile document"
+    },
+    "/users/{userId}/saves/{slotId}": {
+      "schema": "PlayerSaveSlot",
+      "description": "Cloud save slots for the player"
+    },
+    "/leaderboard/{userId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Global player score and leaderboard ranking"
+    }
+  }
+}

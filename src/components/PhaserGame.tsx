@@ -6,6 +6,9 @@ import { GameOverScene } from '../engine/scenes/GameOverScene';
 import { IntroScene } from '../engine/scenes/IntroScene';
 import { OverworldScene } from '../engine/scenes/OverworldScene';
 import { TitleScene } from '../engine/scenes/TitleScene';
+import { MiniMapOverlay } from './MiniMapOverlay';
+import { BattleLogOverlay } from './BattleLogOverlay';
+import { LocationBannerOverlay } from './LocationBannerOverlay';
 
 interface PhaserGameProps {
   onOpenMenu: () => void;
@@ -66,10 +69,12 @@ export const PhaserGame: React.FC<PhaserGameProps> = ({
 
   return (
     <div className="relative w-full flex items-center justify-center bg-black">
-      <div
-        ref={containerRef}
-        className="w-full max-w-[800px] aspect-[4/3] border-4 border-neutral-700 rounded-sm shadow-2xl overflow-hidden bg-black"
-      />
+      <div className="w-full max-w-[800px] aspect-[4/3] border-4 border-neutral-700 rounded-sm shadow-2xl overflow-hidden bg-black relative">
+        <div ref={containerRef} className="w-full h-full" />
+        <MiniMapOverlay />
+        <BattleLogOverlay />
+        <LocationBannerOverlay />
+      </div>
     </div>
   );
 };

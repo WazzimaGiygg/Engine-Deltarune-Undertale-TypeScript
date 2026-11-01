@@ -1,6 +1,6 @@
 export type GameMode = 'OVERWORLD' | 'BATTLE' | 'GAME_OVER' | 'VICTORY';
 
-export type ItemType = 'heal' | 'weapon' | 'armor';
+export type ItemType = 'heal' | 'weapon' | 'armor' | 'key';
 
 export interface GameItem {
   id: string;
@@ -62,6 +62,14 @@ export interface DialogueNode {
   face?: string;
 }
 
+export interface MonsterBestiaryData {
+  encounters: number;
+  defeated: number;
+  spared: number;
+  fled: number;
+  lastEncounterTime?: number;
+}
+
 export interface GameSaveData {
   stats: PlayerStats;
   currentRoom: string;
@@ -70,4 +78,6 @@ export interface GameSaveData {
   flags: Record<string, boolean>;
   timestamp: number;
   playtimeSeconds?: number;
+  bestiary?: Record<string, MonsterBestiaryData>;
+  slot?: number;
 }

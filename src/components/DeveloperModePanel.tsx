@@ -130,6 +130,20 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
             <div className="space-y-2">
               <button
                 onClick={() => {
+                  onSelectBattle('dummy');
+                  onClose();
+                }}
+                className="w-full text-left p-2.5 border border-neutral-700 bg-neutral-900 hover:border-yellow-400 hover:bg-neutral-850 transition-colors text-xs flex items-center justify-between"
+              >
+                <div>
+                  <span className="text-orange-300 font-bold block">Boneco de Treino (Dummy)</span>
+                  <span className="text-[9px] text-neutral-400">Padrão: Treinamento de Toriel (sem projéteis)</span>
+                </div>
+                <span className="text-[10px] text-neutral-500">HP 15 · ATK 0</span>
+              </button>
+
+              <button
+                onClick={() => {
                   onSelectBattle('froggit');
                   onClose();
                 }}
@@ -286,10 +300,10 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
               <span>TELEPORTE NO CENÁRIO</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs max-h-56 overflow-y-auto pr-1">
               <button
                 onClick={() => {
-                  onWarpRoom('room_awakening', 180, 260);
+                  onWarpRoom('room_awakening', 320, 240);
                   onClose();
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
@@ -298,7 +312,7 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
               </button>
               <button
                 onClick={() => {
-                  onWarpRoom('room_flowey', 110, 240);
+                  onWarpRoom('room_flowey', 240, 240);
                   onClose();
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
@@ -316,7 +330,7 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
               </button>
               <button
                 onClick={() => {
-                  onWarpRoom('ruins_switch_chamber', 320, 320);
+                  onWarpRoom('ruins_switch_chamber', 320, 340);
                   onClose();
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
@@ -343,21 +357,66 @@ export const DeveloperModePanel: React.FC<DeveloperModePanelProps> = ({
               </button>
               <button
                 onClick={() => {
-                  onWarpRoom('ruins_crossroads', 320, 300);
+                  onWarpRoom('ruins_long_hall', 320, 340);
                   onClose();
                 }}
                 className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px]"
               >
-                6. Cruzamento Monstros
+                6. O Longo Corredor
               </button>
               <button
                 onClick={() => {
-                  onWarpRoom('ruins_boss_gate', 320, 320);
+                  onWarpRoom('room_toriel_house_exterior', 240, 310);
                   onClose();
                 }}
-                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px]"
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
               >
-                7. Portão dos Guardiões
+                7. Casa de Toriel (Fachada)
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('room_toriel_house_interior', 320, 360);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
+              >
+                8. Casa de Toriel (Sala)
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('room_toriel_hallway', 320, 260);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-yellow-300"
+              >
+                9. Casa de Toriel (Corredor)
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('room_player_bedroom', 320, 340);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-neutral-300"
+              >
+                10. Quarto da Criança
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('room_toriel_bedroom', 320, 340);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-neutral-300"
+              >
+                11. Quarto de Toriel
+              </button>
+              <button
+                onClick={() => {
+                  onWarpRoom('room_toriel_basement', 200, 230);
+                  onClose();
+                }}
+                className="p-2 border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-left text-[10px] text-neutral-300"
+              >
+                12. Saída Subterrânea
               </button>
             </div>
 
