@@ -95,6 +95,7 @@ export class BattleScene extends Phaser.Scene {
   };
 
   private isCleaningUp = false;
+  private torielSpareCount = 0;
 
   constructor() {
     super('BattleScene');
@@ -108,6 +109,7 @@ export class BattleScene extends Phaser.Scene {
     gameState.recordEncounter(this.enemyData.id);
     this.selectedButtonIndex = 0;
     this.selectedSubMenuIndex = 0;
+    this.torielSpareCount = 0;
     this.buttons = [];
     this.subMenuItems = [];
     this.bullets = [];
@@ -149,7 +151,17 @@ export class BattleScene extends Phaser.Scene {
     gameState.setActiveScene('BattleScene');
     gameState.recordEncounter(this.enemyData.id);
     SpriteGenerator.generateAllTextures(this);
-    soundManager.playMusic('battle');
+
+    // Select distinct music theme based on enemy encounter
+    if (this.enemyData.id === 'deltajester') {
+      soundManager.playMusic('battle_boss_jester');
+    } else if (this.enemyData.id === 'toriel') {
+      soundManager.playMusic('battle_toriel');
+    } else if (this.enemyData.id === 'dummy') {
+      soundManager.playMusic('battle_dummy');
+    } else {
+      soundManager.playMusic('battle_standard');
+    }
 
     combatLogManager.clearLog();
     combatLogManager.addEntry({
@@ -896,6 +908,57 @@ export class BattleScene extends Phaser.Scene {
       }
     } else if (activeBtn === 'MERCY') {
       if (this.selectedSubMenuIndex === 0) {
+        if (this.enemyData.id === 'toriel') {
+          this.torielSpareCount++;
+          const torielSpareReplies = [
+            '...?',
+            'O que você está fazendo?',
+            'Ataque ou fuja!',
+            'O que você está provando com isso?',
+            'Lute comigo ou vá embora!',
+            'Pare de me olhar desse jeito...',
+            'Eu sei que você quer ir para casa, mas...',
+            'Por favor... apenas suba de volta...',
+            'Eu prometo que cuidarei bem de você aqui...',
+            '......',
+            'Heh... Você é mesmo teimoso, não é?',
+          ];
+          const replyIdx = Math.min(torielSpareReplies.length - 1, this.torielSpareCount - 1);
+          const reply = torielSpareReplies[replyIdx];
+
+          if (this.torielSpareCount >= 5) {
+            this.enemyData.mercyProgress = 100;
+            this.enemyData.canSpare = true;
+            this.turnManager.triggerVictory();
+            this.handleEnemySpared();
+            return;
+          }
+
+          this.turnManager.completePlayerAction();
+          this.clearSubMenuItems();
+          this.narrativeText.setVisible(true);
+          this.narrativeText.setText(
+            `* Você poupou Toriel.\n* Mas ela não parece querer desistir ainda.`
+          );
+          this.soulCursor.setVisible(false);
+
+          combatLogManager.addEntry({
+            turn: this.turnManager.getTurnNumber(),
+            source: 'player',
+            actionType: 'mercy',
+            actor: gameState.getStats().name,
+            title: `Poupar Toriel (${this.torielSpareCount}ª tentativa)`,
+            description: `Você recusou-se a machucar Toriel e ofereceu misericórdia.`,
+            reaction: `Toriel hesita com dor no coração: "${reply}"`,
+          });
+
+          const timer = this.time.delayedCall(1600, () => {
+            this.startEnemyDialogueSequence(reply);
+          });
+          this.turnManager.registerCleanup(() => timer.remove(false));
+          return;
+        }
+
         if (this.enemyData.mercyProgress >= 100) {
           this.turnManager.triggerVictory();
           this.handleEnemySpared();
@@ -1175,6 +1238,47 @@ export class BattleScene extends Phaser.Scene {
         });
       });
       this.turnManager.registerCleanup(() => timer.remove(false));
+    } else if (
+      pattern === 'toriel_fire_helix' ||
+      pattern === 'toriel_fire_spiral' ||
+      pattern === 'toriel_fire_rain'
+    ) {
+      // Toriel's iconic fire magic!
+      const currentHp = gameState.getStats().hp;
+      const isCriticalHp = currentHp <= 2;
+
+      for (let i = 0; i < 7; i++) {
+        const timer = this.time.delayedCall(i * 550, () => {
+          if (this.isCleaningUp || !this.turnManager || this.turnManager.getPhase() !== 'ENEMY_ATTACK') return;
+          const fromLeft = i % 2 === 0;
+          const spawnX = fromLeft
+            ? this.boxBounds.x + 12 + Math.random() * 25
+            : this.boxBounds.x + this.boxBounds.w - 12 - Math.random() * 25;
+          const spawnY = this.boxBounds.y + 6;
+
+          const flame = this.add.sprite(spawnX, spawnY, 'bullet_flame');
+          flame.setDepth(15);
+
+          let targetX = this.soulPlayable.x;
+          let targetY = this.soulPlayable.y;
+
+          // Undertale canonical detail: If Frisk is at 2 HP or below, Toriel's fire attacks deliberately swerve away
+          if (isCriticalHp) {
+            targetX += fromLeft ? -50 : 50;
+          }
+
+          const angle = Math.atan2(targetY - spawnY, targetX - spawnX);
+          const speed = 80 + Math.random() * 25;
+
+          this.bullets.push({
+            sprite: flame,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            type: 'normal',
+          });
+        });
+        this.turnManager.registerCleanup(() => timer.remove(false));
+      }
     } else {
       // Delta Jester / Star burst
       for (let i = 0; i < 8; i++) {
@@ -1421,6 +1525,11 @@ export class BattleScene extends Phaser.Scene {
       gameState.setFlag('dummy_practiced', true);
       gameState.setFlag('dummy_defeated', true);
     }
+    if (this.enemyData.id === 'toriel') {
+      gameState.setFlag('toriel_resolved', true);
+      gameState.setFlag('toriel_defeated', true);
+      gameState.setFlag('toriel_killed', true);
+    }
     const rewards = gameState.addRewards(this.enemyData.expReward, this.enemyData.goldReward);
     this.refreshHUD();
 
@@ -1459,6 +1568,10 @@ export class BattleScene extends Phaser.Scene {
     if (this.enemyData.id === 'dummy') {
       gameState.setFlag('dummy_practiced', true);
       gameState.setFlag('dummy_spared', true);
+    }
+    if (this.enemyData.id === 'toriel') {
+      gameState.setFlag('toriel_resolved', true);
+      gameState.setFlag('toriel_spared', true);
     }
     gameState.addRewards(0, this.enemyData.goldReward);
     this.refreshHUD();

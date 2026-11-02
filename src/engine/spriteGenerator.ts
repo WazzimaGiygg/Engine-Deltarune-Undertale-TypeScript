@@ -353,6 +353,81 @@ export class SpriteGenerator {
       }
     }
 
+    // 3b. Toriel Boss Battle Sprite (140x160)
+    if (!scene.textures.exists('enemy_toriel')) {
+      const canvas = scene.textures.createCanvas('enemy_toriel', 140, 160);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Horns
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(50, 12, 10, 18);
+        ctx.fillRect(80, 12, 10, 18);
+        ctx.fillRect(46, 16, 6, 12);
+        ctx.fillRect(88, 16, 6, 12);
+
+        // Head
+        ctx.fillRect(46, 26, 48, 40);
+        ctx.fillRect(40, 34, 60, 28);
+
+        // Floppy Ears
+        ctx.fillRect(32, 38, 10, 36);
+        ctx.fillRect(98, 38, 10, 36);
+        ctx.fillRect(34, 72, 6, 6);
+        ctx.fillRect(100, 72, 6, 6);
+
+        // Eyes (pained, motherly droop)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(52, 42, 8, 8);
+        ctx.fillRect(80, 42, 8, 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(54, 44, 3, 3);
+        ctx.fillRect(82, 44, 3, 3);
+
+        // Snout & Fangs
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(66, 52, 8, 4); // nose
+        ctx.fillRect(62, 60, 16, 2); // mouth line
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(60, 62, 3, 4); // left fang
+        ctx.fillRect(77, 62, 3, 4); // right fang
+
+        // Robes
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(34, 70, 72, 84); // robe body
+        ctx.fillRect(24, 78, 14, 50); // left sleeve
+        ctx.fillRect(102, 78, 14, 50); // right sleeve
+
+        // Robe black contour & interior pattern
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(38, 74, 64, 76);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(42, 78, 56, 68);
+
+        // Delta Rune Emblem on Chest
+        ctx.fillStyle = '#000000';
+        // Winged Circle
+        ctx.beginPath();
+        ctx.arc(70, 92, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(52, 90, 10, 3); // left wing
+        ctx.fillRect(78, 90, 10, 3); // right wing
+
+        // 3 Triangles
+        ctx.fillRect(62, 104, 6, 6);
+        ctx.fillRect(72, 104, 6, 6);
+        ctx.fillRect(67, 114, 6, 6);
+
+        // White Paws / Hands clasped gently in front
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(58, 126, 10, 12);
+        ctx.fillRect(72, 126, 10, 12);
+
+        canvas.refresh();
+      }
+    }
+
     // 4. Flowey the Flower (Friendly)
     if (!scene.textures.exists('flowey_friendly')) {
       const canvas = scene.textures.createCanvas('flowey_friendly', 64, 64);
@@ -864,6 +939,28 @@ export class SpriteGenerator {
         ctx.fillStyle = '#ff9ff3';
         ctx.fillRect(7, 36, 6, 4);
         ctx.fillRect(19, 36, 6, 4);
+        canvas.refresh();
+      }
+    }
+
+    // 9b. NPC: Sans Shadow Silhouette (Creeping behind Frisk in Snowdin woods)
+    if (!scene.textures.exists('npc_sans_shadow')) {
+      const canvas = scene.textures.createCanvas('npc_sans_shadow', 32, 40);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Dark shadowy outline
+        ctx.fillStyle = '#080614';
+        ctx.fillRect(8, 4, 16, 14); // head
+        ctx.fillRect(5, 18, 22, 16); // body/hoodie
+        ctx.fillRect(8, 34, 16, 6); // legs
+
+        // Slightly luminous white eye dots in the dark
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(12, 10, 2, 2);
+        ctx.fillRect(18, 10, 2, 2);
+
         canvas.refresh();
       }
     }
@@ -2684,6 +2781,210 @@ export class SpriteGenerator {
         canvas.refresh();
       }
     }
+
+    // --- Snowdin Forest Textures ---
+    // 25. Snowdin Forest Floor Tile (32x32)
+    if (!scene.textures.exists('tile_floor_snow')) {
+      const canvas = scene.textures.createCanvas('tile_floor_snow', 32, 32);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.fillStyle = '#171829'; // Deep indigo night snow
+        ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#22243d';
+        ctx.fillRect(1, 1, 30, 30);
+        ctx.fillStyle = '#34385e';
+        ctx.fillRect(4, 4, 8, 8);
+        ctx.fillRect(18, 16, 10, 8);
+        // Soft white snowflake glints
+        ctx.fillStyle = '#c7d2fe';
+        ctx.fillRect(8, 8, 2, 2);
+        ctx.fillRect(22, 20, 2, 2);
+        canvas.refresh();
+      }
+    }
+
+    // 26. Snowdin Forest Wall Tile (32x32)
+    if (!scene.textures.exists('tile_wall_snow')) {
+      const canvas = scene.textures.createCanvas('tile_wall_snow', 32, 32);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.fillStyle = '#0a0a14';
+        ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#151726';
+        ctx.fillRect(2, 2, 28, 28);
+        ctx.fillStyle = '#21243b';
+        ctx.fillRect(4, 4, 12, 12);
+        ctx.fillRect(18, 18, 10, 10);
+        canvas.refresh();
+      }
+    }
+
+    // 27. Snowy Pine Tree Prop (48x64)
+    if (!scene.textures.exists('prop_snow_pine')) {
+      const canvas = scene.textures.createCanvas('prop_snow_pine', 48, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Trunk
+        ctx.fillStyle = '#3d2716';
+        ctx.fillRect(21, 46, 6, 18);
+
+        // Bough 3 (Bottom)
+        ctx.fillStyle = '#1e3025';
+        ctx.beginPath();
+        ctx.moveTo(24, 28);
+        ctx.lineTo(44, 48);
+        ctx.lineTo(4, 48);
+        ctx.closePath();
+        ctx.fill();
+        // Snow on Bough 3
+        ctx.fillStyle = '#dbeafe';
+        ctx.fillRect(6, 44, 36, 5);
+
+        // Bough 2 (Middle)
+        ctx.fillStyle = '#243b2e';
+        ctx.beginPath();
+        ctx.moveTo(24, 16);
+        ctx.lineTo(38, 34);
+        ctx.lineTo(10, 34);
+        ctx.closePath();
+        ctx.fill();
+        // Snow on Bough 2
+        ctx.fillStyle = '#e0e7ff';
+        ctx.fillRect(12, 30, 24, 4);
+
+        // Bough 1 (Top)
+        ctx.fillStyle = '#2e4c3b';
+        ctx.beginPath();
+        ctx.moveTo(24, 4);
+        ctx.lineTo(32, 20);
+        ctx.lineTo(16, 20);
+        ctx.closePath();
+        ctx.fill();
+        // Snow cap
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(21, 4, 6, 4);
+        ctx.fillRect(18, 16, 12, 3);
+
+        canvas.refresh();
+      }
+    }
+
+    // 28. Heavy Fallen Branch on Snow (36x14)
+    if (!scene.textures.exists('prop_heavy_branch')) {
+      const canvas = scene.textures.createCanvas('prop_heavy_branch', 36, 14);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+        // Branch log
+        ctx.fillStyle = '#4a2c11';
+        ctx.fillRect(2, 4, 32, 6);
+        ctx.fillStyle = '#6b411b';
+        ctx.fillRect(4, 5, 28, 2);
+        // Twigs
+        ctx.fillRect(8, 1, 3, 4);
+        ctx.fillRect(22, 9, 3, 4);
+        // Light snow dusting on top
+        ctx.fillStyle = '#e0e7ff';
+        ctx.fillRect(6, 3, 20, 2);
+        canvas.refresh();
+      }
+    }
+
+    // 28b. Broken Branch (Snapped into pieces with crack sound)
+    if (!scene.textures.exists('prop_heavy_branch_broken')) {
+      const canvas = scene.textures.createCanvas('prop_heavy_branch_broken', 36, 14);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+        // Left piece
+        ctx.fillStyle = '#4a2c11';
+        ctx.fillRect(1, 5, 14, 6);
+        // Splintered end
+        ctx.fillStyle = '#d2a679';
+        ctx.fillRect(14, 4, 3, 3);
+        ctx.fillRect(15, 8, 2, 2);
+
+        // Right piece (pushed slightly away)
+        ctx.fillStyle = '#4a2c11';
+        ctx.fillRect(20, 3, 15, 6);
+        ctx.fillStyle = '#d2a679';
+        ctx.fillRect(18, 3, 3, 3);
+        ctx.fillRect(19, 7, 2, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 29. Wooden Bar Bridge (Built by Papyrus with ridiculously wide bars)
+    if (!scene.textures.exists('prop_snow_bridge')) {
+      const canvas = scene.textures.createCanvas('prop_snow_bridge', 80, 56);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Bridge deck planks
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(0, 16, 80, 24);
+        ctx.fillStyle = '#5d4037';
+        for (let x = 2; x < 80; x += 10) {
+          ctx.fillRect(x, 17, 8, 22);
+        }
+
+        // Bridge Top and Bottom Railings
+        ctx.fillStyle = '#8d6e63';
+        ctx.fillRect(0, 12, 80, 4);
+        ctx.fillRect(0, 40, 80, 4);
+
+        // Vertical posts with hilariously wide space in the center
+        ctx.fillStyle = '#a1887f';
+        ctx.fillRect(4, 4, 6, 48);
+        ctx.fillRect(70, 4, 6, 48);
+
+        // Center wide bar (wide enough for anyone to walk through)
+        ctx.fillRect(28, 4, 4, 48);
+        ctx.fillRect(48, 4, 4, 48);
+
+        // Snow patches on railing
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(3, 3, 8, 2);
+        ctx.fillRect(27, 3, 6, 2);
+        ctx.fillRect(47, 3, 6, 2);
+        ctx.fillRect(69, 3, 8, 2);
+
+        canvas.refresh();
+      }
+    }
+
+    // 30. Monumental Grand Ruins Stone Door (64x64)
+    if (!scene.textures.exists('prop_ruins_massive_door')) {
+      const canvas = scene.textures.createCanvas('prop_ruins_massive_door', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Heavy stone arch
+        ctx.fillStyle = '#22142d';
+        ctx.fillRect(4, 2, 56, 60);
+        ctx.fillStyle = '#3c224f';
+        ctx.fillRect(8, 6, 48, 54);
+
+        // Inner doorway darkness or light crack
+        ctx.fillStyle = '#0d0614';
+        ctx.fillRect(14, 14, 36, 46);
+
+        // Winged Delta Rune crest above arch
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(32, 10, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(22, 9, 6, 2);
+        ctx.fillRect(36, 9, 6, 2);
+
+        canvas.refresh();
+      }
+    }
   }
 
   private static createBattleEffects(scene: Phaser.Scene) {
@@ -2745,6 +3046,25 @@ export class SpriteGenerator {
         ctx.fillStyle = '#00d2d3';
         ctx.fillRect(1, 1, 4, 3);
         ctx.fillRect(7, 1, 4, 3);
+        canvas.refresh();
+      }
+    }
+
+    // 4b. Flame Bullet (Toriel Fire Magic)
+    if (!scene.textures.exists('bullet_flame')) {
+      const canvas = scene.textures.createCanvas('bullet_flame', 16, 16);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = '#ff4757';
+        ctx.fillRect(6, 1, 4, 14);
+        ctx.fillRect(3, 4, 10, 10);
+        ctx.fillRect(1, 7, 14, 6);
+        ctx.fillStyle = '#ffa502';
+        ctx.fillRect(4, 5, 8, 8);
+        ctx.fillRect(5, 3, 6, 10);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(6, 6, 4, 5);
         canvas.refresh();
       }
     }

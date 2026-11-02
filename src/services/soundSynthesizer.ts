@@ -267,13 +267,118 @@ class SoundSynthesizer {
     });
   }
 
-  // Chiptune Music Generator & Looper
-  public playMusic(theme: 'story_intro' | 'overworld' | 'fallen_down' | 'battle' | 'boss') {
+  // Branch snap / wood crack sound in Snowdin Forest
+  public playBranchCrack() {
     if (this.isMuted) return;
     this.initCtx();
     if (!this.ctx) return;
 
-    if (this.currentMusic?.id === theme) return;
+    const t = this.ctx.currentTime;
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.09);
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, t);
+    filter.frequency.exponentialRampToValueAtTime(280, t + 0.09);
+    filter.Q.setValueAtTime(3.5, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(this.masterVolume * 0.45, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    noise.start(t);
+  }
+
+  // Classic Undertale whoopee cushion fart sound in the hand
+  public playWhoopeeCushion() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const dur = 0.55;
+
+    // Carrier oscillator: buzzy sawtooth
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(95, t);
+    osc.frequency.exponentialRampToValueAtTime(65, t + dur);
+
+    // LFO to flutter / modulate pitch for the iconic raspberry texture
+    const lfo = this.ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.setValueAtTime(36, t);
+    lfo.frequency.linearRampToValueAtTime(24, t + dur);
+
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.setValueAtTime(35, t);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, t);
+    filter.frequency.exponentialRampToValueAtTime(250, t + dur);
+
+    const masterGain = this.ctx.createGain();
+    masterGain.gain.setValueAtTime(this.masterVolume * 0.4, t);
+    masterGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+    osc.connect(filter);
+    filter.connect(masterGain);
+    masterGain.connect(this.ctx.destination);
+
+    lfo.start(t);
+    osc.start(t);
+    lfo.stop(t + dur);
+    osc.stop(t + dur);
+  }
+
+  // Chiptune Music Generator & Looper
+  public playMusic(
+    theme:
+      | 'story_intro'
+      | 'title_menu'
+      | 'fallen_down'
+      | 'ruins_exploration'
+      | 'home_toriel'
+      | 'basement_drone'
+      | 'flowey_theme'
+      | 'battle_standard'
+      | 'battle_dummy'
+      | 'battle_boss_jester'
+      | 'battle_toriel'
+      | 'determination'
+      | 'snowy_forest'
+      | 'sans_theme'
+      | 'overworld'
+      | 'battle'
+      | 'boss'
+  ) {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    // Map backwards compatible aliases
+    let activeTheme = theme;
+    if (activeTheme === 'battle') activeTheme = 'battle_standard';
+    if (activeTheme === 'boss') activeTheme = 'battle_boss_jester';
+    if (activeTheme === 'overworld') activeTheme = 'ruins_exploration';
+
+    if (this.currentMusic?.id === activeTheme) return;
     this.stopMusic();
 
     let isPlaying = true;
@@ -284,112 +389,304 @@ class SoundSynthesizer {
     let tempo = 150;
     let leadNotes: number[] = [];
     let bassNotes: number[] = [];
+    let leadWave: OscillatorType = 'square';
+    let bassWave: OscillatorType = 'triangle';
+    let addHarmonic = false;
 
-    if (theme === 'story_intro') {
+    if (activeTheme === 'story_intro') {
       // Toby Fox - Undertale OST 001 "Once Upon a Time" (Prologue / Story Intro Theme)
-      // Key: C Major, gentle acoustic music box / chime piano
       tempo = 210;
+      leadWave = 'triangle';
+      bassWave = 'sine';
+      addHarmonic = true;
       leadNotes = [
-        // Measure 1: C - E - G - C5
         261.63, 329.63, 392.00, 523.25, 523.25, 0, 0, 0,
-        // Measure 2: B - G
         493.88, 493.88, 0, 392.00, 392.00, 0, 0, 0,
-        // Measure 3: A - G - E - G - D
         440.00, 392.00, 329.63, 392.00, 293.66, 293.66, 293.66, 0,
-        // Measure 4: C - E - G - C5
         261.63, 329.63, 392.00, 523.25, 523.25, 0, 0, 0,
-        // Measure 5: B - G
         493.88, 493.88, 0, 392.00, 392.00, 0, 0, 0,
-        // Measure 6: A - B - C5 - D5 - C5
         440.00, 493.88, 523.25, 587.33, 523.25, 523.25, 523.25, 0,
-
-        // Measure 7: E5 - D5 - C5 - G
         659.25, 659.25, 587.33, 523.25, 392.00, 392.00, 392.00, 0,
-        // Measure 8: A - C5 - B - G
         440.00, 523.25, 493.88, 493.88, 392.00, 392.00, 392.00, 0,
-        // Measure 9: E5 - D5 - C5 - G
         659.25, 659.25, 587.33, 523.25, 392.00, 392.00, 392.00, 0,
-        // Measure 10: A - B - C5 - D5 - E5 - D5 - C5
         440.00, 493.88, 523.25, 587.33, 659.25, 587.33, 523.25, 523.25,
       ];
       bassNotes = [
-        // Measure 1: C Major
         130.81, 0, 196.00, 0, 164.81, 0, 196.00, 0,
-        // Measure 2: Em / G
         164.81, 0, 246.94, 0, 196.00, 0, 246.94, 0,
-        // Measure 3: F -> G
         174.61, 0, 261.63, 0, 196.00, 0, 293.66, 0,
-        // Measure 4: C Major
         130.81, 0, 196.00, 0, 164.81, 0, 196.00, 0,
-        // Measure 5: Em / G
         164.81, 0, 246.94, 0, 196.00, 0, 246.94, 0,
-        // Measure 6: F -> G -> C
         174.61, 0, 196.00, 0, 130.81, 0, 196.00, 0,
-
-        // Measure 7: Am
         110.00, 0, 164.81, 0, 130.81, 0, 164.81, 0,
-        // Measure 8: F -> G
         174.61, 0, 261.63, 0, 196.00, 0, 293.66, 0,
-        // Measure 9: Am
         110.00, 0, 164.81, 0, 130.81, 0, 164.81, 0,
-        // Measure 10: F -> G -> C
         174.61, 0, 196.00, 0, 130.81, 0, 261.63, 0,
       ];
-    } else if (theme === 'fallen_down') {
-      // Toby Fox - Undertale OST 004 "Fallen Down" (Ruins Entrance Theme)
-      // Key: C Major, gentle acoustic music box / celeste
-      tempo = 195;
+    } else if (activeTheme === 'title_menu') {
+      // Undertale OST 002 "Start Menu" - Iconic 8-bit fast arpeggio sequence
+      tempo = 120;
+      leadWave = 'square';
+      bassWave = 'triangle';
       leadNotes = [
-        // Phrase 1 (Measures 1-4)
-        659.25, 587.33, 523.25, 392.00, 392.00, 0, // E5 D5 C5 G4
-        440.00, 523.25, 493.88, 392.00, 392.00, 0, // A4 C5 B4 G4
-        // Phrase 2 (Measures 5-8)
-        659.25, 587.33, 523.25, 392.00, 392.00, 0, // E5 D5 C5 G4
-        440.00, 493.88, 523.25, 587.33, 659.25, 587.33, // A4 B4 C5 D5 E5 D5
-        523.25, 523.25, 0, 0, 0, 0, // C5
-        // Phrase 3 (Measures 9-12)
-        659.25, 783.99, 698.46, 587.33, 587.33, 0, // E5 G5 F5 D5
-        587.33, 698.46, 659.25, 523.25, 523.25, 0, // D5 F5 E5 C5
-        // Phrase 4 (Measures 13-16)
-        523.25, 659.25, 587.33, 493.88, 493.88, 0, // C5 E5 D5 B4
-        440.00, 493.88, 523.25, 587.33, 523.25, 523.25, // A4 B4 C5 D5 C5
+        // C major arpeggio
+        261.63, 329.63, 392.00, 523.25, 392.00, 329.63,
+        // G/B arpeggio
+        246.94, 293.66, 392.00, 493.88, 392.00, 293.66,
+        // Am arpeggio
+        220.00, 261.63, 329.63, 440.00, 329.63, 261.63,
+        // F arpeggio
+        174.61, 220.00, 261.63, 349.23, 261.63, 220.00,
+        // C major build
+        261.63, 329.63, 392.00, 523.25, 659.25, 523.25,
+        // G major build
+        196.00, 246.94, 293.66, 392.00, 493.88, 587.33,
+        // F -> G resolve
+        349.23, 440.00, 523.25, 392.00, 493.88, 587.33,
+        523.25, 0, 523.25, 0, 523.25, 0,
+      ];
+      bassNotes = [
+        130.81, 0, 130.81, 0, 130.81, 0,
+        123.47, 0, 123.47, 0, 123.47, 0,
+        110.00, 0, 110.00, 0, 110.00, 0,
+        87.31, 0, 87.31, 0, 87.31, 0,
+        130.81, 0, 130.81, 0, 130.81, 0,
+        98.00, 0, 98.00, 0, 98.00, 0,
+        87.31, 0, 87.31, 0, 98.00, 0,
+        130.81, 0, 196.00, 0, 261.63, 0,
+      ];
+    } else if (activeTheme === 'fallen_down') {
+      // Undertale OST 004 "Fallen Down" - Ruins Entrance & Awakening
+      tempo = 195;
+      leadWave = 'triangle';
+      bassWave = 'sine';
+      addHarmonic = true;
+      leadNotes = [
+        659.25, 587.33, 523.25, 392.00, 392.00, 0,
+        440.00, 523.25, 493.88, 392.00, 392.00, 0,
+        659.25, 587.33, 523.25, 392.00, 392.00, 0,
+        440.00, 493.88, 523.25, 587.33, 659.25, 587.33,
+        523.25, 523.25, 0, 0, 0, 0,
+        659.25, 783.99, 698.46, 587.33, 587.33, 0,
+        587.33, 698.46, 659.25, 523.25, 523.25, 0,
+        523.25, 659.25, 587.33, 493.88, 493.88, 0,
+        440.00, 493.88, 523.25, 587.33, 523.25, 523.25,
         523.25, 0, 0, 0, 0, 0,
       ];
       bassNotes = [
-        // C
         130.81, 196.00, 261.63, 196.00, 261.63, 196.00,
-        // Em/B
         123.47, 196.00, 246.94, 196.00, 246.94, 196.00,
-        // C
         130.81, 196.00, 261.63, 196.00, 261.63, 196.00,
-        // F -> G
         174.61, 261.63, 349.23, 196.00, 293.66, 392.00,
-        // C
         130.81, 196.00, 261.63, 196.00, 261.63, 196.00,
-        // G/B -> Dm
         146.83, 220.00, 293.66, 146.83, 220.00, 293.66,
-        // C
         130.81, 196.00, 261.63, 130.81, 196.00, 261.63,
-        // Am
         110.00, 164.81, 220.00, 110.00, 164.81, 220.00,
-        // F -> G -> C
         174.61, 261.63, 196.00, 293.66, 130.81, 261.63,
         130.81, 0, 196.00, 0, 261.63, 0,
       ];
-    } else if (theme === 'overworld') {
-      // Fallen Down / Ruins peaceful motif
-      tempo = 200;
+    } else if (activeTheme === 'ruins_exploration') {
+      // Undertale OST 005 "Ruins" - Catacombs, puzzles, ancient stone halls
+      tempo = 175;
+      leadWave = 'triangle';
+      bassWave = 'sine';
       leadNotes = [
-        261.63, 329.63, 392.00, 493.88, 440.00, 392.00, 329.63, 293.66,
-        261.63, 329.63, 392.00, 523.25, 493.88, 440.00, 392.00, 329.63,
+        // F minor mystery melody
+        349.23, 392.00, 415.30, 466.16, 523.25, 466.16, 415.30, 392.00,
+        349.23, 311.13, 349.23, 415.30, 392.00, 349.23, 311.13, 261.63,
+        349.23, 415.30, 523.25, 622.25, 587.33, 523.25, 466.16, 415.30,
+        466.16, 523.25, 587.33, 466.16, 523.25, 0, 0, 0,
       ];
       bassNotes = [
-        130.81, 0, 130.81, 0, 164.81, 0, 164.81, 0,
-        174.61, 0, 174.61, 0, 196.00, 0, 196.00, 0,
+        174.61, 0, 261.63, 0, 207.65, 0, 261.63, 0,
+        138.59, 0, 207.65, 0, 155.56, 0, 233.08, 0,
+        174.61, 0, 261.63, 0, 207.65, 0, 261.63, 0,
+        116.54, 0, 174.61, 0, 130.81, 0, 196.00, 0,
+      ];
+    } else if (activeTheme === 'home_toriel') {
+      // Undertale OST 012 "Home" - Cozy, heartwarming acoustic warmth
+      tempo = 210;
+      leadWave = 'triangle';
+      bassWave = 'sine';
+      addHarmonic = true;
+      leadNotes = [
+        293.66, 369.99, 440.00, 587.33, 554.37, 493.88, 440.00, 369.99,
+        392.00, 493.88, 587.33, 493.88, 440.00, 369.99, 329.63, 293.66,
+        293.66, 369.99, 440.00, 587.33, 739.99, 659.25, 587.33, 440.00,
+        493.88, 554.37, 587.33, 493.88, 440.00, 0, 0, 0,
+      ];
+      bassNotes = [
+        146.83, 0, 220.00, 0, 185.00, 0, 220.00, 0,
+        98.00, 0, 146.83, 0, 196.00, 0, 146.83, 0,
+        110.00, 0, 164.81, 0, 220.00, 0, 164.81, 0,
+        146.83, 0, 220.00, 0, 146.83, 0, 0, 0,
+      ];
+    } else if (activeTheme === 'basement_drone') {
+      // Basement Suspense / Premonition - Dark, eerie, subterranean
+      tempo = 280;
+      leadWave = 'sawtooth';
+      bassWave = 'triangle';
+      leadNotes = [
+        220.00, 0, 207.65, 0, 196.00, 0, 185.00, 0,
+        174.61, 0, 164.81, 0, 155.56, 0, 164.81, 0,
+      ];
+      bassNotes = [
+        55.00, 0, 55.00, 0, 51.91, 0, 51.91, 0,
+        49.00, 0, 49.00, 0, 46.25, 0, 49.00, 0,
+      ];
+    } else if (activeTheme === 'flowey_theme') {
+      // Undertale OST 003 "Your Best Friend" - Deceptively cheerful bouncy carnival
+      tempo = 145;
+      leadWave = 'triangle';
+      bassWave = 'square';
+      leadNotes = [
+        // Playful bounce: F - A - C - D - C - A - F - G
+        349.23, 440.00, 523.25, 587.33, 523.25, 440.00, 349.23, 392.00,
+        440.00, 349.23, 293.66, 261.63, 349.23, 392.00, 440.00, 0,
+        349.23, 440.00, 523.25, 587.33, 698.46, 659.25, 587.33, 523.25,
+        440.00, 392.00, 349.23, 392.00, 349.23, 0, 0, 0,
+      ];
+      bassNotes = [
+        174.61, 0, 130.81, 0, 174.61, 0, 196.00, 0,
+        174.61, 0, 146.83, 0, 174.61, 0, 196.00, 0,
+        174.61, 0, 130.81, 0, 116.54, 0, 130.81, 0,
+        174.61, 0, 196.00, 0, 174.61, 0, 0, 0,
+      ];
+    } else if (activeTheme === 'battle_standard') {
+      // Undertale OST 009 "Enemy Approaching" - Classic battle theme!
+      tempo = 130;
+      leadWave = 'square';
+      bassWave = 'triangle';
+      leadNotes = [
+        293.66, 0, 349.23, 0, 392.00, 0, 415.30, 415.30,
+        392.00, 0, 349.23, 0, 293.66, 349.23, 392.00, 0,
+        261.63, 0, 329.63, 0, 392.00, 0, 440.00, 440.00,
+        392.00, 0, 329.63, 0, 261.63, 329.63, 392.00, 0,
+        246.94, 0, 293.66, 0, 349.23, 0, 392.00, 392.00,
+        349.23, 0, 293.66, 0, 246.94, 293.66, 349.23, 0,
+        261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25,
+      ];
+      bassNotes = [
+        146.83, 146.83, 0, 146.83, 138.59, 138.59, 0, 138.59,
+        130.81, 130.81, 0, 130.81, 123.47, 123.47, 0, 123.47,
+        116.54, 116.54, 0, 116.54, 110.00, 110.00, 0, 110.00,
+        130.81, 0, 146.83, 0, 164.81, 0, 196.00, 0,
+      ];
+    } else if (activeTheme === 'battle_dummy') {
+      // Undertale OST 010 "Ghost Battle / Pathetic House" - Swing jazzy shuffle
+      tempo = 135;
+      leadWave = 'sawtooth';
+      bassWave = 'triangle';
+      leadNotes = [
+        293.66, 0, 349.23, 0, 440.00, 415.30, 392.00, 0,
+        349.23, 0, 293.66, 0, 349.23, 0, 293.66, 0,
+        261.63, 0, 311.13, 0, 392.00, 369.99, 349.23, 0,
+        311.13, 0, 261.63, 0, 311.13, 0, 261.63, 0,
+        293.66, 349.23, 440.00, 523.25, 587.33, 523.25, 440.00, 349.23,
+        293.66, 0, 0, 0, 293.66, 0, 0, 0,
+      ];
+      bassNotes = [
+        146.83, 0, 174.61, 0, 220.00, 0, 207.65, 0,
+        196.00, 0, 174.61, 0, 146.83, 0, 174.61, 0,
+        130.81, 0, 155.56, 0, 196.00, 0, 185.00, 0,
+        174.61, 0, 155.56, 0, 130.81, 0, 155.56, 0,
+        146.83, 0, 146.83, 0, 146.83, 0, 146.83, 0,
+        146.83, 0, 0, 0, 146.83, 0, 0, 0,
+      ];
+    } else if (activeTheme === 'battle_boss_jester') {
+      // "THE WORLD REVOLVING" - Fast frantic polyrhythmic circus arpeggios
+      tempo = 110;
+      leadWave = 'square';
+      bassWave = 'sawtooth';
+      leadNotes = [
+        493.88, 415.30, 329.63, 493.88, 554.37, 440.00, 369.99, 554.37,
+        622.25, 493.88, 415.30, 622.25, 659.25, 493.88, 415.30, 659.25,
+        739.99, 622.25, 493.88, 739.99, 830.61, 659.25, 554.37, 830.61,
+        987.77, 830.61, 659.25, 493.88, 415.30, 329.63, 415.30, 493.88,
+      ];
+      bassNotes = [
+        164.81, 246.94, 329.63, 246.94, 220.00, 277.18, 369.99, 277.18,
+        246.94, 311.13, 415.30, 311.13, 164.81, 246.94, 329.63, 246.94,
+        146.83, 220.00, 293.66, 220.00, 138.59, 207.65, 277.18, 207.65,
+        164.81, 246.94, 329.63, 246.94, 164.81, 0, 164.81, 0,
+      ];
+    } else if (activeTheme === 'battle_toriel') {
+      // Undertale OST 014 "Heartache" - Dramatic, driving, emotional boss anthem
+      tempo = 125;
+      leadWave = 'sawtooth';
+      bassWave = 'square';
+      leadNotes = [
+        493.88, 587.33, 739.99, 659.25, 587.33, 554.37, 493.88, 440.00,
+        493.88, 587.33, 739.99, 880.00, 783.99, 739.99, 659.25, 739.99,
+        587.33, 659.25, 739.99, 587.33, 659.25, 554.37, 493.88, 440.00,
+        493.88, 554.37, 587.33, 659.25, 739.99, 659.25, 587.33, 554.37,
+      ];
+      bassNotes = [
+        123.47, 123.47, 185.00, 123.47, 98.00, 98.00, 146.83, 98.00,
+        110.00, 110.00, 164.81, 110.00, 92.50, 92.50, 138.59, 92.50,
+        123.47, 123.47, 185.00, 123.47, 98.00, 98.00, 146.83, 98.00,
+        110.00, 110.00, 164.81, 110.00, 92.50, 92.50, 123.47, 185.00,
+      ];
+    } else if (activeTheme === 'determination') {
+      // Undertale OST 011 "Determination" - Game Over piano / emotional chime
+      tempo = 230;
+      leadWave = 'triangle';
+      bassWave = 'sine';
+      addHarmonic = true;
+      leadNotes = [
+        // Bb major / F major motif
+        466.16, 587.33, 698.46, 932.33, 880.00, 698.46, 587.33, 698.46,
+        783.99, 932.33, 1174.66, 1046.50, 932.33, 783.99, 698.46, 587.33,
+        466.16, 587.33, 698.46, 932.33, 880.00, 698.46, 587.33, 698.46,
+        783.99, 880.00, 932.33, 783.99, 698.46, 0, 0, 0,
+      ];
+      bassNotes = [
+        116.54, 0, 174.61, 0, 233.08, 0, 174.61, 0,
+        155.56, 0, 233.08, 0, 311.13, 0, 233.08, 0,
+        174.61, 0, 261.63, 0, 349.23, 0, 261.63, 0,
+        116.54, 0, 174.61, 0, 116.54, 0, 0, 0,
+      ];
+    } else if (activeTheme === 'snowy_forest') {
+      // Undertale OST 017 "Snowy" - Soft, contemplative winter piano & bells in Snowdin Forest
+      tempo = 230;
+      leadWave = 'triangle';
+      bassWave = 'sine';
+      addHarmonic = true;
+      leadNotes = [
+        // C minor / Eb Major winter phrase
+        392.00, 466.16, 523.25, 587.33, 622.25, 587.33, 523.25, 466.16,
+        392.00, 349.23, 392.00, 466.16, 523.25, 392.00, 349.23, 261.63,
+        392.00, 466.16, 523.25, 622.25, 698.46, 622.25, 523.25, 466.16,
+        523.25, 587.33, 622.25, 523.25, 392.00, 0, 0, 0,
+      ];
+      bassNotes = [
+        130.81, 0, 196.00, 0, 155.56, 0, 196.00, 0,
+        103.83, 0, 155.56, 0, 130.81, 0, 155.56, 0,
+        116.54, 0, 174.61, 0, 146.83, 0, 174.61, 0,
+        130.81, 0, 196.00, 0, 130.81, 0, 0, 0,
+      ];
+    } else if (activeTheme === 'sans_theme') {
+      // Undertale OST 015 "Sans." - Jaunty, laid-back jazzy bounce
+      tempo = 135;
+      leadWave = 'sawtooth';
+      bassWave = 'triangle';
+      leadNotes = [
+        293.66, 0, 293.66, 0, 349.23, 0, 293.66, 0,
+        392.00, 0, 349.23, 0, 293.66, 0, 261.63, 0,
+        293.66, 0, 349.23, 0, 392.00, 0, 415.30, 415.30,
+        440.00, 0, 523.25, 0, 440.00, 0, 349.23, 0,
+      ];
+      bassNotes = [
+        146.83, 0, 110.00, 0, 146.83, 0, 174.61, 0,
+        196.00, 0, 174.61, 0, 146.83, 0, 130.81, 0,
+        146.83, 0, 174.61, 0, 196.00, 0, 207.65, 0,
+        220.00, 0, 261.63, 0, 220.00, 0, 174.61, 0,
       ];
     } else {
-      // Energetic Undertale Battle / Megalo motif
+      // Fallback Megalo motif
       tempo = 125;
+      leadWave = 'square';
+      bassWave = 'triangle';
       leadNotes = [
         293.66, 293.66, 587.33, 0, 440.00, 0, 415.30, 0,
         392.00, 0, 349.23, 0, 293.66, 349.23, 392.00, 0,
@@ -415,11 +712,11 @@ class SoundSynthesizer {
       if (leadNote > 0) {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        osc.type = (theme === 'story_intro' || theme === 'fallen_down') ? 'triangle' : theme === 'overworld' ? 'sine' : 'square';
+        osc.type = leadWave;
         osc.frequency.setValueAtTime(leadNote, t);
 
-        const leadVol = (theme === 'story_intro' || theme === 'fallen_down') ? this.musicVolume * 0.22 : this.musicVolume * 0.15;
-        const decayLen = (theme === 'story_intro' || theme === 'fallen_down') ? (tempo / 1000) * 1.3 : (tempo / 1000) * 0.9;
+        const leadVol = addHarmonic ? this.musicVolume * 0.22 : this.musicVolume * 0.16;
+        const decayLen = addHarmonic ? (tempo / 1000) * 1.3 : (tempo / 1000) * 0.9;
         gain.gain.setValueAtTime(leadVol, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + decayLen);
 
@@ -428,8 +725,8 @@ class SoundSynthesizer {
         osc.start(t);
         osc.stop(t + decayLen);
 
-        // For story intro and fallen down: Add delicate acoustic chime harmonic overtone
-        if (theme === 'story_intro' || theme === 'fallen_down') {
+        // Add delicate chime harmonic overtone when requested
+        if (addHarmonic) {
           const oscH = this.ctx.createOscillator();
           const gainH = this.ctx.createGain();
           oscH.type = 'sine';
@@ -447,11 +744,11 @@ class SoundSynthesizer {
       if (bassNote > 0) {
         const oscB = this.ctx.createOscillator();
         const gainB = this.ctx.createGain();
-        oscB.type = (theme === 'story_intro' || theme === 'fallen_down') ? 'sine' : 'triangle';
+        oscB.type = bassWave;
         oscB.frequency.setValueAtTime(bassNote, t);
 
-        const bassVol = (theme === 'story_intro' || theme === 'fallen_down') ? this.musicVolume * 0.24 : this.musicVolume * 0.22;
-        const bassDecay = (theme === 'story_intro' || theme === 'fallen_down') ? (tempo / 1000) * 1.2 : (tempo / 1000) * 0.85;
+        const bassVol = addHarmonic ? this.musicVolume * 0.24 : this.musicVolume * 0.22;
+        const bassDecay = addHarmonic ? (tempo / 1000) * 1.2 : (tempo / 1000) * 0.85;
         gainB.gain.setValueAtTime(bassVol, t);
         gainB.gain.exponentialRampToValueAtTime(0.001, t + bassDecay);
 
@@ -468,7 +765,7 @@ class SoundSynthesizer {
     scheduleTick();
 
     this.currentMusic = {
-      id: theme,
+      id: activeTheme,
       stop: () => {
         isPlaying = false;
         if (timerId !== null) {

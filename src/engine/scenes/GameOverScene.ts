@@ -56,6 +56,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   private showGameOverText(playerName: string) {
+    soundManager.playMusic('determination');
     const title = this.add.text(320, 150, 'GAME OVER', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '28px',

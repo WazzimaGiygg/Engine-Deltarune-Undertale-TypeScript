@@ -108,6 +108,8 @@ export class OverworldScene extends Phaser.Scene {
   private torielDummyNpcSprite: Phaser.GameObjects.Sprite | null = null;
   private torielHouseNpcSprite: Phaser.GameObjects.Sprite | null = null;
   private dummyNpcSprite: Phaser.GameObjects.Sprite | null = null;
+  private snowdinBranchSprite: Phaser.GameObjects.Sprite | null = null;
+  private sansForestNpcSprite: Phaser.GameObjects.Sprite | null = null;
 
   // Room definitions with generous door buffer zones
   private rooms: Record<string, RoomData> = {
@@ -1006,7 +1008,7 @@ export class OverworldScene extends Phaser.Scene {
           dialogueId: 'save_toriel_basement',
           text: '* O ar gélido vindo do fundo do corredor e a sensação iminente de liberdade enchem você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)',
         },
-        // Toriel NPC standing before the gate
+        // Toriel NPC standing before the gate (appears when not resolved)
         {
           type: 'npc',
           x: 435,
@@ -1016,13 +1018,102 @@ export class OverworldScene extends Phaser.Scene {
           npcVoice: 'toriel',
           dialogueId: 'toriel_basement_talk',
         },
-        // Monumental Grand Ruins Exit Gate
+        // Monumental Grand Ruins Exit Gate (opens passage to the exit corridor)
         {
-          type: 'sign',
+          type: 'door',
           x: 535,
           y: 200,
           npcKey: 'prop_basement_gate',
-          dialogueId: 'ruins_exit_gate',
+          targetRoom: 'room_ruins_exit_corridor',
+          targetX: 80,
+          targetY: 240,
+        },
+      ],
+    },
+
+    room_ruins_exit_corridor: {
+      id: 'room_ruins_exit_corridor',
+      name: 'Ruínas - Corredor de Saída',
+      width: 640,
+      height: 480,
+      floorTile: 'tile_floor_ruins',
+      wallTiles: [],
+      objects: [
+        // West doorway back to basement
+        {
+          type: 'door',
+          x: 50,
+          y: 240,
+          npcKey: 'prop_arch_door',
+          targetRoom: 'room_toriel_basement',
+          targetX: 470,
+          targetY: 200,
+        },
+        // Flowerbed where Flowey pops up to deliver judgment
+        {
+          type: 'sign',
+          x: 320,
+          y: 240,
+          npcKey: 'prop_golden_flowerbed',
+          text: '* Um pequeno canteiro de flores douradas iluminado por uma tênue fresta no alto da caverna.',
+        },
+        // East monumental double doors opening into the snowy woods
+        {
+          type: 'door',
+          x: 590,
+          y: 240,
+          npcKey: 'prop_arch_door',
+          targetRoom: 'room_snowdin_forest_entrance',
+          targetX: 90,
+          targetY: 240,
+        },
+      ],
+    },
+
+    room_snowdin_forest_entrance: {
+      id: 'room_snowdin_forest_entrance',
+      name: 'Floresta de Snowdin - Entrada',
+      width: 640,
+      height: 480,
+      floorTile: 'tile_floor_snow',
+      wallTiles: [],
+      objects: [
+        // West monumental stone double doors back to the Ruins
+        {
+          type: 'door',
+          x: 45,
+          y: 240,
+          npcKey: 'prop_ruins_massive_door',
+          targetRoom: 'room_ruins_exit_corridor',
+          targetX: 550,
+          targetY: 240,
+        },
+        // Heavy fallen branch lying across the snowy path
+        {
+          type: 'sign',
+          x: 230,
+          y: 240,
+          npcKey: 'prop_heavy_branch',
+          dialogueId: 'snowdin_heavy_branch',
+          text: '* Um galho grosso de árvore repousa no meio da trilha coberta de neve.',
+        },
+        // Wooden Bar Bridge built by Papyrus
+        {
+          type: 'sign',
+          x: 460,
+          y: 240,
+          npcKey: 'prop_snow_bridge',
+          dialogueId: 'papyrus_bridge',
+          text: '* Um portão com barras verticais de madeira feito por Papyrus.\n* As barras foram colocadas com espaçamento tão largo que qualquer um pode simplesmente passar entre elas.',
+        },
+        // Save Star past the wooden bridge
+        {
+          type: 'save',
+          x: 580,
+          y: 240,
+          id: 'save_snowdin_entrance',
+          dialogueId: 'save_snowdin_entrance',
+          text: '* O vento gélido da floresta de neve e a sensação de um novo horizonte pela frente enchem você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)',
         },
       ],
     },
@@ -1043,19 +1134,8 @@ export class OverworldScene extends Phaser.Scene {
     this.isTransitioning = false;
     this.transitionCooldown = 500;
 
-    // Sound: Fallen Down for Ruins Entrance and Toriel's Home, Overworld for other exploration
-    if (
-      this.currentRoomId === 'room_toriel_entrance' ||
-      this.currentRoomId === 'room_toriel_house_exterior' ||
-      this.currentRoomId === 'room_toriel_house_interior' ||
-      this.currentRoomId === 'room_toriel_hallway' ||
-      this.currentRoomId === 'room_player_bedroom' ||
-      this.currentRoomId === 'room_toriel_bedroom'
-    ) {
-      soundManager.playMusic('fallen_down');
-    } else {
-      soundManager.playMusic('overworld');
-    }
+    // Route authentic music per room / zone
+    this.playMusicForRoom(this.currentRoomId);
 
     // Controls
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -3924,19 +4004,8 @@ export class OverworldScene extends Phaser.Scene {
           this.player.setTexture('player_down_0');
         }
 
-        // Audio transition: Fallen Down for Ruins Entrance and Toriel's Home, Overworld for other chambers
-        if (
-          targetRoom === 'room_toriel_entrance' ||
-          targetRoom === 'room_toriel_house_exterior' ||
-          targetRoom === 'room_toriel_house_interior' ||
-          targetRoom === 'room_toriel_hallway' ||
-          targetRoom === 'room_player_bedroom' ||
-          targetRoom === 'room_toriel_bedroom'
-        ) {
-          soundManager.playMusic('fallen_down');
-        } else {
-          soundManager.playMusic('overworld');
-        }
+        // Audio transition: Route distinct music per room / zone
+        this.playMusicForRoom(targetRoom);
       },
       () => {
         this.isTransitioning = false;
@@ -3957,6 +4026,28 @@ export class OverworldScene extends Phaser.Scene {
         }
       }
     );
+  }
+
+  private playMusicForRoom(roomId: string) {
+    if (
+      roomId === 'room_toriel_house_interior' ||
+      roomId === 'room_toriel_hallway' ||
+      roomId === 'room_player_bedroom' ||
+      roomId === 'room_toriel_bedroom'
+    ) {
+      soundManager.playMusic('home_toriel');
+    } else if (roomId.includes('basement')) {
+      soundManager.playMusic('basement_drone');
+    } else if (
+      roomId === 'room_awakening' ||
+      roomId === 'room_flowey' ||
+      roomId === 'room_toriel_entrance' ||
+      roomId === 'room_toriel_house_exterior'
+    ) {
+      soundManager.playMusic('fallen_down');
+    } else {
+      soundManager.playMusic('ruins_exploration');
+    }
   }
 
   private lowerAllSpikes() {

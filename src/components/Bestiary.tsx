@@ -73,6 +73,14 @@ const MONSTER_LORE_NOTES: Record<
     tacticsNote:
       'Seu confronto inicial exige resiliência e foco no desvio até a intervenção flamejante salvadora de Toriel. Não é possível derrotá-lo com armas comuns durante a emboscada inicial das Ruínas.',
   },
+  toriel: {
+    title: 'Guardiã Maternal das Ruínas',
+    location: 'Saída Subterrânea das Ruínas',
+    loreNote:
+      'A sábia e protetora guardiã das Ruínas e antiga rainha dos monstros. Veste uma túnica roxa ornada com o brasão sagrado da Delta Rune e domina magias ancestrais de fogo. Ela tenta impedir Frisk de passar pelo portão para salvá-lo do Rei Asgore.',
+    tacticsNote:
+      'Seus ataques de fogo mágico desviam deliberadamente de você se o seu HP cair a níveis críticos. Recusar a violência e insistir em poupá-la repetidas vezes amolece seu coração materno, permitindo que ela aceite sua determinação.',
+  },
 };
 
 interface BestiaryProps {
@@ -89,7 +97,7 @@ export const Bestiary: React.FC<BestiaryProps> = ({ onClose, inModal = false }) 
 
   // Load all monsters and filter by encountered state
   const bestiaryEntries = useMemo(() => {
-    const ids = ['dummy', 'froggit', 'sir_ossos', 'deltajester', 'flowey'];
+    const ids = ['dummy', 'froggit', 'sir_ossos', 'deltajester', 'flowey', 'toriel'];
     const bestiaryMap = gameState.getBestiaryData();
 
     return ids.map((id): BestiaryMonsterEntry => {
@@ -516,6 +524,49 @@ export const Bestiary: React.FC<BestiaryProps> = ({ onClose, inModal = false }) 
       ctx.fillRect(w / 2 - 14, h / 2 - 11, 4, 5);
       ctx.fillRect(w / 2 + 10, h / 2 - 11, 4, 5);
       ctx.fillRect(w / 2 - 6, h / 2 - 4, 12, 3);
+    } else if (id === 'toriel') {
+      // Toriel pixel art
+      // Horns
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(w / 2 - 28, h / 2 - 50, 8, 16);
+      ctx.fillRect(w / 2 + 20, h / 2 - 50, 8, 16);
+      ctx.fillRect(w / 2 - 24, h / 2 - 56, 6, 8);
+      ctx.fillRect(w / 2 + 18, h / 2 - 56, 6, 8);
+
+      // Floppy ears
+      ctx.fillRect(w / 2 - 38, h / 2 - 38, 12, 28);
+      ctx.fillRect(w / 2 + 26, h / 2 - 38, 12, 28);
+
+      // White fur head & snout
+      ctx.fillRect(w / 2 - 24, h / 2 - 40, 48, 38);
+      ctx.fillRect(w / 2 - 16, h / 2 - 14, 32, 16);
+
+      // Purple Delta Rune Robe
+      ctx.fillStyle = '#8e44ad';
+      ctx.fillRect(w / 2 - 36, h / 2 + 4, 72, 54);
+
+      // Delta Rune white emblem on chest
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2 + 18, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(w / 2 - 14, h / 2 + 28, 6, 6);
+      ctx.fillRect(w / 2 - 2, h / 2 + 28, 6, 6);
+      ctx.fillRect(w / 2 + 10, h / 2 + 28, 6, 6);
+
+      // White sleeves & paws
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(w / 2 - 38, h / 2 + 10, 8, 30);
+      ctx.fillRect(w / 2 + 30, h / 2 + 10, 8, 30);
+
+      // Eyes on head
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(w / 2 - 16, h / 2 - 28, 6, 8);
+      ctx.fillRect(w / 2 + 10, h / 2 - 28, 6, 8);
+      // Small fangs
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(w / 2 - 8, h / 2 - 6, 3, 5);
+      ctx.fillRect(w / 2 + 5, h / 2 - 6, 3, 5);
     }
   }, [selectedMonster]);
 

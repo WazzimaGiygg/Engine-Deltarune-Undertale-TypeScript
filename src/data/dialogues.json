@@ -1090,59 +1090,252 @@
     "speaker": "Toriel",
     "defaultVoice": "toriel",
     "defaultPortrait": "portrait_toriel_normal",
-    "conditionFlag": "toriel_basement_spoken",
-    "altDialogueId": "toriel_basement_repeat",
     "pages": [
       {
-        "text": "* Minha criança... Por que você desceu aqui?",
+        "text": "* Você quer tanto assim deixar as Ruínas, minha criança?",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Por favor, suba de volta. Está muito frio e úmido aqui embaixo.",
+        "text": "* Além deste portão há apenas perigo e sofrimento.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Você quer tanto assim voltar para a sua casa na superfície?",
+        "text": "* Asgore, o rei dos monstros... Ele não terá piedade. Ele tirará a sua vida para tomar sua ALMA.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Além desta porta... Há apenas perigos que você não compreende.",
+        "text": "* Eu tentei proteger tantas crianças humanas antes de você... E todas pereceram além das Ruínas.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Asgore, o rei dos monstros... Ele não terá piedade. Se você passar por este portão, ele tirará a sua vida.",
+        "text": "* Eu não permitirei que você saia para a morte certa.",
         "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       },
       {
-        "text": "* Eu prometi a mim mesma que protegeria você... Por favor, volte para cima. Nós podemos viver felizes juntos aqui.",
-        "portrait": "portrait_toriel_warm",
+        "text": "* Se você insiste em partir... Prove para mim que você é forte o suficiente para sobreviver!",
+        "portrait": "portrait_toriel_normal",
         "voice": "toriel"
       }
     ],
     "onComplete": {
-      "setFlag": "toriel_basement_spoken"
+      "startBattle": "toriel"
     }
   },
-  "toriel_basement_repeat": {
-    "id": "toriel_basement_repeat",
+  "toriel_basement_post_spared": {
+    "id": "toriel_basement_post_spared",
     "speaker": "Toriel",
     "defaultVoice": "toriel",
-    "defaultPortrait": "portrait_toriel_normal",
+    "defaultPortrait": "portrait_toriel_warm",
     "pages": [
       {
-        "text": "* Por favor, suba as escadas de volta para o calor da lareira, minha criança...",
+        "text": "* Minha criança...",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
       },
       {
-        "text": "* Eu preparei um lar tão confortável para você lá em cima.",
+        "text": "* Eu vejo... Você realmente possui um coração puro e uma determinação admirável.",
         "portrait": "portrait_toriel_warm",
         "voice": "toriel"
+      },
+      {
+        "text": "* Eu não posso mais mantê-lo preso aqui nas Ruínas.",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Quando você atravessar este portão, por favor... Não olhe para trás.",
+        "portrait": "portrait_toriel_normal",
+        "voice": "toriel"
+      },
+      {
+        "text": "* Adeus, minha criança... Tenha muito cuidado lá fora. ❤",
+        "portrait": "portrait_toriel_warm",
+        "voice": "toriel"
+      }
+    ]
+  },
+  "flowey_corridor_spared": {
+    "id": "flowey_corridor_spared",
+    "speaker": "Flowey",
+    "defaultVoice": "flowey",
+    "defaultPortrait": "portrait_flowey_wink",
+    "pages": [
+      {
+        "text": "* Esperto. Muito esperto.",
+        "portrait": "portrait_flowey_wink",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Você acha que é tão inteligente, não é?",
+        "portrait": "portrait_flowey_wink",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Você conseguiu poupar a vida de uma pessoa que nem sequer queria te machucar de verdade.",
+        "portrait": "portrait_flowey_happy",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Mas o que você fará quando encontrar um assassino implacável?",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Você vai morrer e morrer, repetidas vezes, até perder toda a sua esperança?",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Lembre-se das minhas palavras... Neste mundo, é MATAR ou MORRER!",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Mal posso esperar para ver você sofrer! Hahahahaha!",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "flowey_corridor_spoken"
+    }
+  },
+  "flowey_corridor_killed": {
+    "id": "flowey_corridor_killed",
+    "speaker": "Flowey",
+    "defaultVoice": "flowey",
+    "defaultPortrait": "portrait_flowey_evil",
+    "pages": [
+      {
+        "text": "* Uau. Inacreditável.",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Você realmente a matou sem hesitar.",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* A pessoa que cuidou de você, que te deu uma cama quentinha e uma fatia doce de torta...",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Você a transformou em poeira! Hahaha... Eu sabia que você tinha um coração frio como o meu!",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      },
+      {
+        "text": "* Neste mundo, é MATAR OU MORRER!",
+        "portrait": "portrait_flowey_evil",
+        "voice": "flowey"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "flowey_corridor_spoken"
+    }
+  },
+  "sans_forest_intro": {
+    "id": "sans_forest_intro",
+    "speaker": "???",
+    "defaultVoice": "sans",
+    "pages": [
+      {
+        "text": "* H u m a n o . . .",
+        "voice": "sans"
+      },
+      {
+        "text": "* N ã o  s a b e  c o m o  c u m p r i m e n t a r  u m  n o v o  a m i g o ?",
+        "voice": "sans"
+      },
+      {
+        "text": "* V i r e - s e . . .  e  a p e r t e  a  m i n h a  m ã o .",
+        "voice": "sans"
+      }
+    ]
+  },
+  "sans_forest_banter": {
+    "id": "sans_forest_banter",
+    "speaker": "Sans",
+    "defaultVoice": "sans",
+    "defaultPortrait": "portrait_sans_wink",
+    "pages": [
+      {
+        "text": "* hehehehe... o velho truque da almofada de pum na palma da mão.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      },
+      {
+        "text": "* NUNCA perde a graça.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      },
+      {
+        "text": "* de qualquer forma, você é um humano, certo? isso é hilário.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* sou sans. sans o esqueleto.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* na verdade eu deveria estar de vigia procurando humanos agora...",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* mas quer saber? eu não ligo muito pra capturar ninguém.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      },
+      {
+        "text": "* agora meu irmão, papyrus... ele é um FANÁTICO por caçar humanos.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* na verdade, acho que é ele vindo logo ali.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* rápido, passe por esta ponte de madeira! meu irmão fez as barras tão largas que até uma girafa passaria direto.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      }
+    ],
+    "onComplete": {
+      "setFlag": "sans_met"
+    }
+  },
+  "sans_forest_repeat": {
+    "id": "sans_forest_repeat",
+    "speaker": "Sans",
+    "defaultVoice": "sans",
+    "defaultPortrait": "portrait_sans_wink",
+    "pages": [
+      {
+        "text": "* pode passar pela ponte de madeira sem medo, pivete.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
+      },
+      {
+        "text": "* meu irmão papyrus colocou um portão com grades espaçadas demais pra deter alguém.",
+        "portrait": "portrait_sans_normal",
+        "voice": "sans"
+      },
+      {
+        "text": "* se você encontrar com ele, finja que ficou impressionado com os puzzles dele, ok? ele adora isso.",
+        "portrait": "portrait_sans_wink",
+        "voice": "sans"
       }
     ]
   }

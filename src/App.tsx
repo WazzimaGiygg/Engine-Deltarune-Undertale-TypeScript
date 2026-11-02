@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { User } from 'firebase/auth';
+import { BattleTipFloatingCard } from './components/BattleTipFloatingCard';
+import { BattleTutorialModal } from './components/BattleTutorialModal';
 import { DeveloperModePanel } from './components/DeveloperModePanel';
 import { FirebaseLoginPromptModal } from './components/FirebaseLoginPromptModal';
 import { LeaderboardModal } from './components/LeaderboardModal';
@@ -27,6 +29,7 @@ export default function App() {
   const [questToast, setQuestToast] = useState<QuestNotification | null>(null);
   const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(auth.currentUser);
 
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -102,6 +105,12 @@ export default function App() {
 
   const handleGameRef = useCallback((game: Phaser.Game | null) => {
     gameRef.current = game;
+    if (game) {
+      game.events.on('open_battle_tutorial', () => {
+        soundManager.playMenuSelect();
+        setIsTutorialOpen(true);
+      });
+    }
   }, []);
 
   const handleVirtualAction = (key: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'Z' | 'X' | 'C') => {
@@ -275,6 +284,19 @@ export default function App() {
             <span className="hidden sm:inline">PLACAR</span>
           </button>
 
+          {/* Bullet-Hell Tutorial & Daily Tip Button */}
+          <button
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setIsTutorialOpen(true);
+            }}
+            className="px-2 sm:px-2.5 py-1 text-xs border border-neutral-700 text-neutral-300 hover:border-yellow-400 hover:text-yellow-300 transition-colors cursor-pointer flex items-center gap-1 font-bold whitespace-nowrap"
+            title="Dicas do Dia, Guia de Cores de Balas e Mini-Simulador de Treino"
+          >
+            <span>💡</span>
+            <span className="hidden sm:inline">DICAS</span>
+          </button>
+
           {/* Quick Save button to persist state to localStorage and Cloud */}
           <button
             onClick={handleQuickSave}
@@ -401,6 +423,7 @@ export default function App() {
         onOpenShop={() => setIsShopOpen(true)}
         onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenTutorial={() => setIsTutorialOpen(true)}
       />
 
       {/* Firebase Google Cloud Login Prompt Modal */}
@@ -427,6 +450,15 @@ export default function App() {
         isOpen={isShopOpen}
         onClose={() => setIsShopOpen(false)}
         stats={stats}
+      />
+
+      {/* Floating Tip Card for Start Screen */}
+      <BattleTipFloatingCard onOpenTutorial={() => setIsTutorialOpen(true)} />
+
+      {/* Battle Tutorial & Bullet-Hell Guide Modal */}
+      <BattleTutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
       />
 
       {/* V.0.0.2-ZT.1: Dedicated Developer Screen (Motor Completo) */}

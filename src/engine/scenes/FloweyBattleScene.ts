@@ -53,7 +53,7 @@ export class FloweyBattleScene extends Phaser.Scene {
     gameState.setActiveScene('FloweyBattleScene');
     gameState.recordEncounter('flowey');
     SpriteGenerator.generateAllTextures(this);
-    soundManager.playMusic('battle');
+    soundManager.playMusic('flowey_theme');
 
     combatLogManager.clearLog();
     combatLogManager.addEntry({

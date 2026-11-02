@@ -20,11 +20,11 @@ export class TitleScene extends Phaser.Scene {
   create() {
     gameState.setActiveScene('TitleScene');
     SpriteGenerator.generateAllTextures(this);
-    soundManager.playMusic('story_intro');
+    soundManager.playMusic('title_menu');
     this.secretBuffer = '';
 
     // Big Game Title
-    const title = this.add.text(320, 110, 'UNDERTALE T.S', {
+    const title = this.add.text(320, 105, 'UNDERTALE T.S', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '26px',
       color: '#ffffff',
@@ -34,7 +34,7 @@ export class TitleScene extends Phaser.Scene {
     title.setOrigin(0.5);
 
     // Subtitle
-    const subtitle = this.add.text(320, 150, '-- O RPG ONDE NINGUÉM PRECISA MORRER --', {
+    const subtitle = this.add.text(320, 142, '-- O RPG ONDE NINGUÉM PRECISA MORRER --', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '9px',
       color: '#aaaaaa',
@@ -46,35 +46,36 @@ export class TitleScene extends Phaser.Scene {
     const lastSave = hasSave ? gameState.getLastSavedData() : null;
 
     let startY = 240;
+    let stepY = 38;
 
     if (hasSave && lastSave) {
       // Classic Undertale Save Preview Card
       const card = this.add.graphics();
       card.fillStyle(0x000000, 1);
       card.lineStyle(3, 0xffffff, 1);
-      card.fillRect(130, 175, 380, 68);
-      card.strokeRect(130, 175, 380, 68);
+      card.fillRect(130, 168, 380, 64);
+      card.strokeRect(130, 168, 380, 64);
 
       const mins = Math.floor((lastSave.playtimeSeconds || 0) / 60);
       const secs = (lastSave.playtimeSeconds || 0) % 60;
       const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
-      this.add.text(145, 188, lastSave.stats.name.toUpperCase(), {
+      this.add.text(145, 180, lastSave.stats.name.toUpperCase(), {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '11px',
         color: '#ffffff',
       });
-      this.add.text(285, 188, `LV ${lastSave.stats.lv}`, {
+      this.add.text(285, 180, `LV ${lastSave.stats.lv}`, {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '11px',
         color: '#ffffff',
       });
-      this.add.text(420, 188, `${pad(mins)}:${pad(secs)}`, {
+      this.add.text(420, 180, `${pad(mins)}:${pad(secs)}`, {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '11px',
         color: '#ffffff',
       });
-      this.add.text(145, 216, lastSave.roomName || 'Ruínas - Entrada', {
+      this.add.text(145, 206, lastSave.roomName || 'Ruínas - Entrada', {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '10px',
         color: '#ffff00',
@@ -102,8 +103,16 @@ export class TitleScene extends Phaser.Scene {
             this.scene.start('IntroScene');
           },
         },
+        {
+          label: 'DICA DO DIA / TUTORIAL',
+          action: () => {
+            soundManager.playMenuSelect();
+            this.game.events.emit('open_battle_tutorial');
+          },
+        },
       ];
-      startY = 275;
+      startY = 254;
+      stepY = 34;
     } else {
       this.options = [
         {
@@ -119,16 +128,24 @@ export class TitleScene extends Phaser.Scene {
             this.scene.start('IntroScene');
           },
         },
+        {
+          label: 'DICA DO DIA / TUTORIAL',
+          action: () => {
+            soundManager.playMenuSelect();
+            this.game.events.emit('open_battle_tutorial');
+          },
+        },
       ];
-      startY = 240;
+      startY = 225;
+      stepY = 40;
     }
 
     // Render options
     this.optionTexts = [];
     this.options.forEach((opt, idx) => {
-      const txt = this.add.text(320, startY + idx * 42, opt.label, {
+      const txt = this.add.text(320, startY + idx * stepY, opt.label, {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '12px',
+        fontSize: '11px',
         color: idx === 0 ? '#ffff00' : '#ffffff',
       });
       txt.setOrigin(0.5);

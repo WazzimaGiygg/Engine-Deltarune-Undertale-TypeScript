@@ -15,6 +15,7 @@ interface OverworldMenuModalProps {
   onOpenShop?: () => void;
   onOpenFirebaseModal?: () => void;
   onOpenLeaderboard?: () => void;
+  onOpenTutorial?: () => void;
 }
 
 export type MenuTab = 'ITEM' | 'STAT' | 'BESTIARY' | 'QUEST' | 'PHONE' | 'EQUIP' | 'SAVE';
@@ -28,6 +29,7 @@ export const OverworldMenuModal: React.FC<OverworldMenuModalProps> = ({
   onOpenShop,
   onOpenFirebaseModal,
   onOpenLeaderboard,
+  onOpenTutorial,
 }) => {
   const [activeTab, setActiveTab] = useState<MenuTab>('ITEM');
   const [selectedItemIdx, setSelectedItemIdx] = useState<number>(0);
@@ -476,6 +478,21 @@ export const OverworldMenuModal: React.FC<OverworldMenuModalProps> = ({
               >
                 <span>🏆</span>
                 <span>PLACAR</span>
+              </button>
+            )}
+
+            {onOpenTutorial && (
+              <button
+                onClick={() => {
+                  soundManager.playMenuSelect();
+                  onClose();
+                  onOpenTutorial();
+                }}
+                className="px-2.5 py-1 text-xs border border-neutral-700 text-neutral-300 hover:border-yellow-400 hover:text-yellow-300 transition-colors cursor-pointer flex items-center gap-1 font-bold"
+                title="Dicas do Dia, Guia de Bullet-Hell e Simulador"
+              >
+                <span>💡</span>
+                <span>DICAS</span>
               </button>
             )}
 
