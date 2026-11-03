@@ -9,8 +9,20 @@ export interface PositionState {
   activeScene: string;
 }
 
+export type GraphicsQuality = 'ultra' | 'balanced' | 'performance';
+
+export interface GraphicsSettingsState {
+  quality: GraphicsQuality;
+  crtFilter: boolean;
+  showFpsCounter: boolean;
+  particleDensity: 'high' | 'medium' | 'low';
+  screenShake: 'normal' | 'reduced' | 'off';
+  pixelSnapping: boolean;
+}
+
 type StateListener = (stats: PlayerStats) => void;
 type PositionListener = (pos: PositionState) => void;
+type GraphicsListener = (settings: GraphicsSettingsState) => void;
 
 class GameStateManager {
   private stats: PlayerStats;
@@ -21,11 +33,20 @@ class GameStateManager {
   private bestiaryData: Record<string, MonsterBestiaryData> = {};
   private listeners: Set<StateListener> = new Set();
   private posListeners: Set<PositionListener> = new Set();
+  private graphicsListeners: Set<GraphicsListener> = new Set();
   private sessionStartTime: number = Date.now();
   private savedPlaytimeSeconds: number = 0;
   private currentRoomName: string = 'Ruínas - Entrada';
 
   private activeSlot: number = 1;
+
+  // Graphics Optimization Settings
+  private graphicsQuality: GraphicsQuality = 'ultra';
+  private crtFilter: boolean = true;
+  private showFpsCounter: boolean = false;
+  private particleDensity: 'high' | 'medium' | 'low' = 'high';
+  private screenShake: 'normal' | 'reduced' | 'off' = 'normal';
+  private pixelSnapping: boolean = true;
 
   constructor() {
     this.stats = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATS));
@@ -40,6 +61,22 @@ class GameStateManager {
     } catch {
       this.activeSlot = 1;
     }
+
+    try {
+      const savedGfx = localStorage.getItem('undertale_graphics_settings');
+      if (savedGfx) {
+        const parsed = JSON.parse(savedGfx);
+        if (parsed.quality) this.graphicsQuality = parsed.quality;
+        if (typeof parsed.crtFilter === 'boolean') this.crtFilter = parsed.crtFilter;
+        if (typeof parsed.showFpsCounter === 'boolean') this.showFpsCounter = parsed.showFpsCounter;
+        if (parsed.particleDensity) this.particleDensity = parsed.particleDensity;
+        if (parsed.screenShake) this.screenShake = parsed.screenShake;
+        if (typeof parsed.pixelSnapping === 'boolean') this.pixelSnapping = parsed.pixelSnapping;
+      }
+    } catch {
+      // Default fallback
+    }
+
     this.loadFromStorage();
   }
 
@@ -101,6 +138,96 @@ class GameStateManager {
   private notifyPosition() {
     const state = this.getPositionState();
     this.posListeners.forEach((fn) => fn(state));
+  }
+
+  // --- GRAPHICS OPTIMIZATION SETTINGS ---
+
+  public getGraphicsSettings(): GraphicsSettingsState {
+    return {
+      quality: this.graphicsQuality,
+      crtFilter: this.crtFilter,
+      showFpsCounter: this.showFpsCounter,
+      particleDensity: this.particleDensity,
+      screenShake: this.screenShake,
+      pixelSnapping: this.pixelSnapping,
+    };
+  }
+
+  public getGraphicsQuality(): GraphicsQuality {
+    return this.graphicsQuality;
+  }
+
+  public setGraphicsQuality(q: GraphicsQuality) {
+    this.graphicsQuality = q;
+    if (q === 'performance') {
+      this.particleDensity = 'low';
+      this.crtFilter = false;
+    } else if (q === 'balanced') {
+      this.particleDensity = 'medium';
+    } else {
+      this.particleDensity = 'high';
+    }
+    this.saveGraphicsSettings();
+    this.notifyGraphics();
+  }
+
+  public getCrtFilter(): boolean {
+    return this.crtFilter;
+  }
+
+  public setCrtFilter(enabled: boolean) {
+    this.crtFilter = enabled;
+    this.saveGraphicsSettings();
+    this.notifyGraphics();
+  }
+
+  public getFpsCounterEnabled(): boolean {
+    return this.showFpsCounter;
+  }
+
+  public setFpsCounterEnabled(enabled: boolean) {
+    this.showFpsCounter = enabled;
+    this.saveGraphicsSettings();
+    this.notifyGraphics();
+  }
+
+  public getParticleDensity(): 'high' | 'medium' | 'low' {
+    return this.particleDensity;
+  }
+
+  public setParticleDensity(density: 'high' | 'medium' | 'low') {
+    this.particleDensity = density;
+    this.saveGraphicsSettings();
+    this.notifyGraphics();
+  }
+
+  public getScreenShake(): 'normal' | 'reduced' | 'off' {
+    return this.screenShake;
+  }
+
+  public setScreenShake(mode: 'normal' | 'reduced' | 'off') {
+    this.screenShake = mode;
+    this.saveGraphicsSettings();
+    this.notifyGraphics();
+  }
+
+  public subscribeGraphics(fn: GraphicsListener): () => void {
+    this.graphicsListeners.add(fn);
+    fn(this.getGraphicsSettings());
+    return () => this.graphicsListeners.delete(fn);
+  }
+
+  private notifyGraphics() {
+    const s = this.getGraphicsSettings();
+    this.graphicsListeners.forEach((fn) => fn(s));
+  }
+
+  private saveGraphicsSettings() {
+    try {
+      localStorage.setItem('undertale_graphics_settings', JSON.stringify(this.getGraphicsSettings()));
+    } catch {
+      // Ignore
+    }
   }
 
   public getPlaytimeSeconds(): number {

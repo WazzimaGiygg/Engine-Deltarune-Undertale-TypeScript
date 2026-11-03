@@ -14,4 +14,60 @@ canvas {
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+/* Authentic CRT Scanline overlay */
+.crt-overlay {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.28) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.035),
+    rgba(0, 255, 0, 0.015),
+    rgba(0, 0, 255, 0.035)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+/* Dynamic CRT scanline sweep beam */
+@keyframes crt-sweep {
+  0% {
+    transform: translateY(-120%);
+  }
+  100% {
+    transform: translateY(600%);
+  }
+}
+
+/* Subtle CRT phosphor flicker */
+@keyframes crt-flicker {
+  0% {
+    opacity: 0.985;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.988;
+  }
+}
+
+.crt-dynamic-sweep {
+  animation: crt-sweep 8s linear infinite;
+}
+
+.crt-flicker {
+  animation: crt-flicker 0.12s infinite;
+}
+
+/* GPU hardware compositing containment */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout paint;
 }

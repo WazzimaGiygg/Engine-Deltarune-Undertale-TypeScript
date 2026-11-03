@@ -578,6 +578,57 @@ export class SpriteGenerator {
       }
     }
 
+    // 5b. Flowey Creepy (sinister grinning face used in cutscenes)
+    if (!scene.textures.exists('flowey_creepy')) {
+      const canvas = scene.textures.createCanvas('flowey_creepy', 64, 64);
+      if (canvas) {
+        const ctx = canvas.getContext();
+        ctx.imageSmoothingEnabled = false;
+
+        // Stem
+        ctx.fillStyle = '#1e8449';
+        ctx.fillRect(30, 42, 4, 20);
+
+        // Petals
+        ctx.fillStyle = '#f39c12';
+        ctx.fillRect(26, 6, 12, 14);
+        ctx.fillRect(26, 38, 12, 14);
+        ctx.fillRect(8, 22, 14, 12);
+        ctx.fillRect(42, 22, 14, 12);
+        ctx.fillRect(14, 12, 10, 10);
+        ctx.fillRect(40, 12, 10, 10);
+        ctx.fillRect(14, 34, 10, 10);
+        ctx.fillRect(40, 34, 10, 10);
+
+        // Face
+        ctx.fillStyle = '#ecf0f1';
+        ctx.fillRect(20, 18, 24, 22);
+        ctx.fillRect(18, 22, 28, 14);
+
+        // Creepy hollow eyes with white pinpricks
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(23, 22, 6, 8);
+        ctx.fillRect(35, 22, 6, 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(25, 25, 2, 2);
+        ctx.fillRect(37, 25, 2, 2);
+
+        // Sinister jagged wide mouth
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(22, 32, 20, 6);
+        ctx.fillRect(20, 30, 3, 3);
+        ctx.fillRect(41, 30, 3, 3);
+        // Sharp teeth
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(24, 32, 2, 3);
+        ctx.fillRect(28, 32, 2, 3);
+        ctx.fillRect(34, 32, 2, 3);
+        ctx.fillRect(38, 32, 2, 3);
+
+        canvas.refresh();
+      }
+    }
+
     // 6. Flowey Scorched / Hurt
     if (!scene.textures.exists('flowey_hurt')) {
       const canvas = scene.textures.createCanvas('flowey_hurt', 64, 64);

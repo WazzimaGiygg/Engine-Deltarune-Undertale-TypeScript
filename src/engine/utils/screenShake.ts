@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameState } from '../gameState';
 
 export type ScreenShakePreset =
   | 'light'
@@ -101,8 +102,18 @@ export function triggerScreenShake(
     onComplete = presetOrOptions.onComplete;
   }
 
+  const userSetting = gameState.getScreenShake();
+  if (userSetting === 'off') {
+    if (onComplete) onComplete();
+    return;
+  }
+  if (userSetting === 'reduced') {
+    intensity *= 0.4;
+    duration *= 0.7;
+  }
+
   // Visual screen flash if requested
-  if (flashOpt && typeof camera.flash === 'function') {
+  if (flashOpt && typeof camera.flash === 'function' && gameState.getGraphicsQuality() !== 'performance') {
     const flashDur = flashOpt.duration ?? 90;
     const r = flashOpt.red ?? 255;
     const g = flashOpt.green ?? 255;

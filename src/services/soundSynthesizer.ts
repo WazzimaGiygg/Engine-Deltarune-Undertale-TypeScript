@@ -347,6 +347,39 @@ class SoundSynthesizer {
     osc.stop(t + dur);
   }
 
+  // Flowey's iconic eerie cackle / evil laugh
+  public playFloweyLaugh() {
+    if (this.isMuted) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const baseNotes = [680, 620, 560, 480, 420, 360, 320];
+    baseNotes.forEach((freq, idx) => {
+      const t = this.ctx!.currentTime + idx * 0.085;
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.85, t + 0.07);
+
+      const filter = this.ctx!.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq * 1.5, t);
+      filter.Q.setValueAtTime(4, t);
+
+      gain.gain.setValueAtTime(this.masterVolume * 0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx!.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.08);
+    });
+  }
+
   // Chiptune Music Generator & Looper
   public playMusic(
     theme:

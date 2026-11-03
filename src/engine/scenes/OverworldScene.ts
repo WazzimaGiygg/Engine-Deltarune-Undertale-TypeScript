@@ -1025,7 +1025,7 @@ export class OverworldScene extends Phaser.Scene {
           y: 200,
           npcKey: 'prop_basement_gate',
           targetRoom: 'room_ruins_exit_corridor',
-          targetX: 80,
+          targetX: 130,
           targetY: 240,
         },
       ],
@@ -1046,8 +1046,8 @@ export class OverworldScene extends Phaser.Scene {
           y: 240,
           npcKey: 'prop_arch_door',
           targetRoom: 'room_toriel_basement',
-          targetX: 470,
-          targetY: 200,
+          targetX: 450,
+          targetY: 220,
         },
         // Flowerbed where Flowey pops up to deliver judgment
         {
@@ -1064,7 +1064,7 @@ export class OverworldScene extends Phaser.Scene {
           y: 240,
           npcKey: 'prop_arch_door',
           targetRoom: 'room_snowdin_forest_entrance',
-          targetX: 90,
+          targetX: 130,
           targetY: 240,
         },
       ],
@@ -1085,7 +1085,7 @@ export class OverworldScene extends Phaser.Scene {
           y: 240,
           npcKey: 'prop_ruins_massive_door',
           targetRoom: 'room_ruins_exit_corridor',
-          targetX: 550,
+          targetX: 510,
           targetY: 240,
         },
         // Heavy fallen branch lying across the snowy path
@@ -2494,6 +2494,80 @@ export class OverworldScene extends Phaser.Scene {
           ease: 'Sine.easeInOut',
         });
       }
+    } else if (room.id === 'room_ruins_exit_corridor') {
+      // Ancient stone exit corridor with light shaft on flowerbed
+      const gfx = this.add.graphics();
+      gfx.setDepth(1);
+      gfx.fillStyle(0x231835, 1);
+      gfx.fillRect(40, 160, 560, 160);
+      gfx.lineStyle(1, 0x362550, 0.5);
+      for (let y = 160; y <= 320; y += 24) {
+        gfx.lineBetween(40, y, 600, y);
+      }
+      for (let x = 40; x <= 600; x += 36) {
+        gfx.lineBetween(x, 160, x, 320);
+      }
+      this.roomGroup.add(gfx);
+
+      // Light beam from above shining on flowerbed (x: 320, y: 240)
+      if (gameState.getGraphicsQuality() !== 'performance') {
+        const beamGfx = this.add.graphics();
+        beamGfx.setDepth(3);
+        beamGfx.fillStyle(0xfff7c2, 0.1);
+        beamGfx.beginPath();
+        beamGfx.moveTo(300, 0);
+        beamGfx.lineTo(340, 0);
+        beamGfx.lineTo(365, 260);
+        beamGfx.lineTo(275, 260);
+        beamGfx.closePath();
+        beamGfx.fillPath();
+        this.roomGroup.add(beamGfx);
+      }
+    } else if (room.id === 'room_snowdin_forest_entrance') {
+      // Snowy white floor
+      const gfx = this.add.graphics();
+      gfx.setDepth(1);
+      gfx.fillStyle(0xdcecf6, 1);
+      gfx.fillRect(0, 0, 640, 480);
+      this.roomGroup.add(gfx);
+
+      // Forest trees lining the northern and southern edges
+      for (let px = 25; px <= 615; px += 46) {
+        const pineTop = this.add.sprite(px, 75, 'prop_snow_pine');
+        pineTop.setDepth(2);
+        this.roomGroup.add(pineTop);
+        const pineTop2 = this.add.sprite(px + 20, 120, 'prop_snow_pine');
+        pineTop2.setDepth(3);
+        this.roomGroup.add(pineTop2);
+
+        const pineBot = this.add.sprite(px, 365, 'prop_snow_pine');
+        pineBot.setDepth(5);
+        this.roomGroup.add(pineBot);
+        const pineBot2 = this.add.sprite(px + 20, 415, 'prop_snow_pine');
+        pineBot2.setDepth(6);
+        this.roomGroup.add(pineBot2);
+      }
+
+      // Falling snow particles (optimized per graphics quality setting)
+      const particleDensity = gameState.getParticleDensity();
+      if (particleDensity !== 'low') {
+        const particleCount = particleDensity === 'medium' ? 12 : 24;
+        for (let i = 0; i < particleCount; i++) {
+          const sx = Phaser.Math.Between(0, 640);
+          const sy = Phaser.Math.Between(0, 480);
+          const flake = this.add.circle(sx, sy, Phaser.Math.Between(1, 2), 0xffffff, Phaser.Math.FloatBetween(0.5, 0.85));
+          flake.setDepth(7);
+          this.roomGroup.add(flake);
+          this.tweens.add({
+            targets: flake,
+            y: sy + 480,
+            x: sx + Phaser.Math.Between(15, 45),
+            duration: Phaser.Math.Between(3000, 5500),
+            repeat: -1,
+            ease: 'Linear',
+          });
+        }
+      }
     } else {
       // Standard rooms fill tiles
       for (let x = 0; x < 640; x += 32) {
@@ -2661,6 +2735,17 @@ export class OverworldScene extends Phaser.Scene {
         } else if (obj.npcKey === 'prop_basement_gate') {
           sprite = this.add.sprite(obj.x, obj.y, 'prop_basement_gate');
           sprite.setDepth(3);
+        } else if (obj.npcKey === 'prop_heavy_branch') {
+          const isCracked = gameState.getFlag('snowdin_branch_cracked');
+          sprite = this.add.sprite(obj.x, obj.y, isCracked ? 'prop_heavy_branch_broken' : 'prop_heavy_branch');
+          sprite.setDepth(4);
+          this.snowdinBranchSprite = sprite as Phaser.GameObjects.Sprite;
+        } else if (obj.npcKey === 'prop_snow_bridge') {
+          sprite = this.add.sprite(obj.x, obj.y, 'prop_snow_bridge');
+          sprite.setDepth(3);
+        } else if (obj.npcKey === 'prop_ruins_massive_door') {
+          sprite = this.add.sprite(obj.x, obj.y, 'prop_ruins_massive_door');
+          sprite.setDepth(3);
         } else if (obj.npcKey === 'prop_basement_stairs') {
           sprite = this.add.sprite(obj.x, obj.y, 'prop_basement_stairs');
           sprite.setDepth(3);
@@ -2694,6 +2779,9 @@ export class OverworldScene extends Phaser.Scene {
           return;
         }
         if (obj.npcKey === 'npc_toriel' && room.id === 'room_toriel_house_exterior' && gameState.getFlag('toriel_house_arrival_cutscene')) {
+          return;
+        }
+        if (obj.npcKey === 'npc_toriel' && room.id === 'room_toriel_basement' && gameState.getFlag('toriel_resolved')) {
           return;
         }
         if (obj.npcKey === 'enemy_froggit' && gameState.getFlag('enemy_defeated_froggit')) {
@@ -2750,6 +2838,12 @@ export class OverworldScene extends Phaser.Scene {
           sprite.setDepth(3);
         } else if (obj.npcKey === 'prop_stairs_up') {
           sprite = this.add.sprite(obj.x, obj.y, 'prop_stairs_up');
+          sprite.setDepth(3);
+        } else if (obj.npcKey === 'prop_ruins_massive_door') {
+          sprite = this.add.sprite(obj.x, obj.y, 'prop_ruins_massive_door');
+          sprite.setDepth(3);
+        } else if (obj.npcKey === 'prop_basement_gate') {
+          sprite = this.add.sprite(obj.x, obj.y, 'prop_basement_gate');
           sprite.setDepth(3);
         } else {
           sprite = this.add.rectangle(obj.x, obj.y, 44, 20, 0x000000, 0) as unknown as Phaser.GameObjects.Sprite;
@@ -3362,8 +3456,9 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   update(_: number, delta: number) {
+    const clampedDelta = Math.min(delta, 33.34);
     if (this.transitionCooldown > 0) {
-      this.transitionCooldown -= delta;
+      this.transitionCooldown -= clampedDelta;
       if (this.transitionCooldown <= 0) {
         this.isTransitioning = false;
       }
@@ -3394,8 +3489,54 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
 
+    // Toriel confrontation trigger in basement before the exit gate
+    if (
+      this.currentRoomId === 'room_toriel_basement' &&
+      !gameState.getFlag('toriel_resolved') &&
+      !this.isTransitioning &&
+      this.player.x >= 370
+    ) {
+      this.player.x = 365;
+      this.player.setTexture('player_right_0');
+      this.startDialogueById('toriel_basement_talk');
+      return;
+    }
+
+    // Flowey judgment trigger in exit corridor
+    if (
+      this.currentRoomId === 'room_ruins_exit_corridor' &&
+      !gameState.getFlag('flowey_corridor_spoken') &&
+      !this.isTransitioning &&
+      this.player.x >= 230
+    ) {
+      this.runFloweyCorridorCutscene();
+      return;
+    }
+
+    // Snowdin heavy branch crack trigger
+    if (
+      this.currentRoomId === 'room_snowdin_forest_entrance' &&
+      !gameState.getFlag('snowdin_branch_cracked') &&
+      !this.isTransitioning &&
+      this.player.x >= 240
+    ) {
+      this.runSnowdinBranchSnap();
+      return;
+    }
+
+    // Sans bridge encounter trigger
+    if (
+      this.currentRoomId === 'room_snowdin_forest_entrance' &&
+      !gameState.getFlag('sans_intro_done') &&
+      !this.isTransitioning &&
+      this.player.x >= 370
+    ) {
+      this.runSansBridgeCutscene();
+      return;
+    }
+
     if (!this.isTransitioning) {
-      this.handleMovement(delta);
+      this.handleMovement(clampedDelta);
       this.checkInteractions();
     }
   }
@@ -3734,8 +3875,31 @@ export class OverworldScene extends Phaser.Scene {
     // Custom boundary confinement for room_toriel_basement (Saída Subterrânea)
     if (this.currentRoomId === 'room_toriel_basement') {
       const atWestStairs = x <= 115 && Math.abs(y - 195) < 32;
+      const atEastGate = x >= 510 && Math.abs(y - 200) < 32;
       if (x < 65 && !atWestStairs) return true;
-      if (x > 565 || y < 168 || y > 300) {
+      if (x > 565 && !atEastGate) return true;
+      if (y < 168 || y > 300) {
+        return true;
+      }
+    }
+
+    // Custom boundary confinement for room_ruins_exit_corridor
+    if (this.currentRoomId === 'room_ruins_exit_corridor') {
+      const atWestDoor = x <= 65 && Math.abs(y - 240) < 32;
+      const atEastDoor = x >= 575 && Math.abs(y - 240) < 32;
+      if (x < 40 && !atWestDoor) return true;
+      if (x > 600 && !atEastDoor) return true;
+      if (y < 185 || y > 295) {
+        return true;
+      }
+    }
+
+    // Custom boundary confinement for room_snowdin_forest_entrance
+    if (this.currentRoomId === 'room_snowdin_forest_entrance') {
+      const atWestDoor = x <= 65 && Math.abs(y - 240) < 32;
+      if (x < 35 && !atWestDoor) return true;
+      if (x > 610) return true;
+      if (y < 185 || y > 295) {
         return true;
       }
     }
@@ -3776,7 +3940,11 @@ export class OverworldScene extends Phaser.Scene {
           cfg.npcKey !== 'prop_hallway_runner' &&
           cfg.npcKey !== 'prop_hallway_door' &&
           cfg.npcKey !== 'prop_basement_stairs' &&
-          cfg.npcKey !== 'prop_stairs_up') ||
+          cfg.npcKey !== 'prop_stairs_up' &&
+          cfg.npcKey !== 'prop_heavy_branch' &&
+          cfg.npcKey !== 'prop_snow_bridge' &&
+          cfg.npcKey !== 'prop_ruins_massive_door' &&
+          cfg.npcKey !== 'prop_basement_gate') ||
         (cfg.type === 'spikes' && sprite.getData('blocking'))
       ) {
         let solidHalfW = cfg.type === 'npc' ? 14 : 12;
@@ -3831,7 +3999,7 @@ export class OverworldScene extends Phaser.Scene {
 
   // V.0.0.2-N7.1: Room transition fix - avoid getting trapped in door hitbox
   private checkDoorTriggers() {
-    if (this.isTransitioning || this.isCutsceneActive) return;
+    if (this.isTransitioning || this.isCutsceneActive || this.transitionCooldown > 0) return;
 
     this.interactablesGroup.getChildren().forEach((child) => {
       const sprite = child as Phaser.GameObjects.Sprite;
@@ -3881,6 +4049,14 @@ export class OverworldScene extends Phaser.Scene {
               );
               return;
             }
+          }
+
+          // Prevent player from passing through the basement gate until Toriel confrontation is resolved
+          if (cfg.targetRoom === 'room_ruins_exit_corridor' && !gameState.getFlag('toriel_resolved')) {
+            this.player.x = Math.min(this.player.x, 390);
+            soundManager.playMenuMove();
+            this.startDialogueById('toriel_basement_talk');
+            return;
           }
 
           this.switchRoom(cfg.targetRoom, cfg.targetX || 320, cfg.targetY || 300);
@@ -4001,7 +4177,16 @@ export class OverworldScene extends Phaser.Scene {
             this.wakeUpPromptText = null;
           }
           this.player.setScale(1);
-          this.player.setTexture('player_down_0');
+          if (targetX <= 160) {
+            this.playerDirection = 'right';
+          } else if (targetX >= 480) {
+            this.playerDirection = 'left';
+          } else if (targetY <= 180) {
+            this.playerDirection = 'down';
+          } else if (targetY >= 320) {
+            this.playerDirection = 'up';
+          }
+          this.player.setTexture(`player_${this.playerDirection}_0`);
         }
 
         // Audio transition: Route distinct music per room / zone
@@ -4009,7 +4194,7 @@ export class OverworldScene extends Phaser.Scene {
       },
       () => {
         this.isTransitioning = false;
-        this.transitionCooldown = 300;
+        this.transitionCooldown = 500;
 
         if (targetRoom === 'room_flowey' && !gameState.getFlag('flowey_met')) {
           this.checkAndStartFloweyCutscene();
@@ -4036,8 +4221,14 @@ export class OverworldScene extends Phaser.Scene {
       roomId === 'room_toriel_bedroom'
     ) {
       soundManager.playMusic('home_toriel');
-    } else if (roomId.includes('basement')) {
+    } else if (roomId.includes('basement') || roomId === 'room_ruins_exit_corridor') {
       soundManager.playMusic('basement_drone');
+    } else if (roomId === 'room_snowdin_forest_entrance') {
+      if (gameState.getFlag('sans_intro_done')) {
+        soundManager.playMusic('sans_theme');
+      } else {
+        soundManager.playMusic('snowy_forest');
+      }
     } else if (
       roomId === 'room_awakening' ||
       roomId === 'room_flowey' ||
@@ -5343,6 +5534,166 @@ export class OverworldScene extends Phaser.Scene {
               onComplete: () => hint.destroy(),
             });
           },
+        });
+      },
+    });
+  }
+
+  // --- Post-Ruins Flowey Judgment Cutscene ---
+  private runFloweyCorridorCutscene() {
+    this.isCutsceneActive = true;
+    this.isMoving = false;
+    this.player.setTexture('player_right_0');
+    this.player.setVisible(true);
+    this.player.setAlpha(1);
+    this.player.setDepth(15);
+
+    // Flowey sprouts up from the center flowerbed
+    const floweyTexture = this.textures.exists('flowey_friendly') ? 'flowey_friendly' : 'flowey_evil';
+    const floweySprite = this.add.sprite(320, 230, floweyTexture);
+    floweySprite.setDepth(15);
+    floweySprite.setScale(0);
+    floweySprite.setVisible(true);
+    floweySprite.setAlpha(1);
+
+    soundManager.playMenuSelect();
+    this.tweens.add({
+      targets: floweySprite,
+      scale: 1,
+      duration: 350,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        soundManager.playFloweyLaugh();
+        triggerScreenShake(this, 'light');
+        const creepyKey = this.textures.exists('flowey_creepy') ? 'flowey_creepy' : 'flowey_evil';
+        floweySprite.setTexture(creepyKey);
+
+        const dialogueKey = gameState.getFlag('toriel_spared')
+          ? 'flowey_corridor_spared'
+          : 'flowey_corridor_killed';
+
+        this.time.delayedCall(450, () => {
+          this.startDialogueById(dialogueKey, () => {
+            soundManager.playFloweyLaugh();
+            this.tweens.add({
+              targets: floweySprite,
+              scaleY: 0,
+              alpha: 0,
+              duration: 400,
+              ease: 'Linear',
+              onComplete: () => {
+                floweySprite.destroy();
+                gameState.setFlag('flowey_corridor_spoken', true);
+                this.isCutsceneActive = false;
+                this.player.setVisible(true);
+                this.player.setAlpha(1);
+                this.player.setTexture('player_right_0');
+              },
+            });
+          });
+        });
+      },
+    });
+  }
+
+  // --- Snowdin Forest Branch Crack Event ---
+  private runSnowdinBranchSnap() {
+    gameState.setFlag('snowdin_branch_cracked', true);
+    soundManager.playBranchCrack();
+    triggerScreenShake(this, 'medium');
+
+    if (this.snowdinBranchSprite && this.snowdinBranchSprite.active) {
+      this.snowdinBranchSprite.setTexture('prop_heavy_branch_broken');
+    }
+
+    const excl = this.add.text(this.player.x, this.player.y - 28, '!', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '12px',
+      color: '#ffdd55',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(20);
+
+    this.tweens.add({
+      targets: excl,
+      y: this.player.y - 36,
+      alpha: 0,
+      duration: 600,
+      onComplete: () => excl.destroy(),
+    });
+  }
+
+  // --- Sans Shadow Approach & Whoopee Cushion Handshake Cutscene ---
+  private runSansBridgeCutscene() {
+    this.isCutsceneActive = true;
+    this.isMoving = false;
+    soundManager.stopMusic();
+
+    this.player.setTexture('player_right_0');
+
+    const startX = Math.max(60, this.player.x - 90);
+    const sansShadow = this.add.sprite(startX, 240, 'npc_sans_shadow');
+    sansShadow.setDepth(5);
+    sansShadow.setAlpha(0);
+
+    this.tweens.add({
+      targets: sansShadow,
+      alpha: 1,
+      x: this.player.x - 36,
+      duration: 1500,
+      ease: 'Linear',
+      onComplete: () => {
+        this.startDialogueById('sans_forest_intro', () => {
+          this.player.setTexture('player_left_0');
+
+          this.tweens.add({
+            targets: sansShadow,
+            x: this.player.x - 24,
+            duration: 320,
+            ease: 'Quad.easeOut',
+            onComplete: () => {
+              // Whoopee cushion fart sound!
+              soundManager.playWhoopeeCushion();
+              triggerScreenShake(this, 'heavy');
+
+              sansShadow.setTexture('npc_sans');
+              sansShadow.setPosition(this.player.x - 28, 240);
+
+              soundManager.playMusic('sans_theme');
+
+              this.time.delayedCall(400, () => {
+                this.startDialogueById('sans_forest_banter', () => {
+                  this.tweens.add({
+                    targets: sansShadow,
+                    x: 420,
+                    y: 200,
+                    duration: 800,
+                    ease: 'Sine.easeInOut',
+                    onComplete: () => {
+                      sansShadow.setData('config', {
+                        type: 'npc',
+                        npcKey: 'npc_sans',
+                        npcName: 'Sans',
+                        npcVoice: 'sans',
+                        dialogueId: 'sans_forest_repeat',
+                      });
+                      sansShadow.setInteractive();
+                      sansShadow.on('pointerdown', () => {
+                        if (!this.isDialogueActive && !this.isCutsceneActive) {
+                          const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, sansShadow.x, sansShadow.y);
+                          if (dist <= 80) this.startDialogueById('sans_forest_repeat');
+                        }
+                      });
+                      this.interactablesGroup.add(sansShadow);
+
+                      gameState.setFlag('sans_intro_done', true);
+                      this.isCutsceneActive = false;
+                    },
+                  });
+                });
+              });
+            },
+          });
         });
       },
     });

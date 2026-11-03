@@ -485,6 +485,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
+    // Delta clamping (max 33.3ms) prevents bullet tunneling and physics stutter on frame spikes
+    const clampedDelta = Math.min(delta, 33.34);
     const phase = this.turnManager.getPhase();
 
     if (phase === 'PLAYER_MENU') {
@@ -492,11 +494,11 @@ export class BattleScene extends Phaser.Scene {
     } else if (phase === 'PLAYER_SUBMENU') {
       this.handleSubMenuInput();
     } else if (phase === 'PLAYER_TARGET') {
-      this.handleTargetMeter(delta);
+      this.handleTargetMeter(clampedDelta);
     } else if (phase === 'ENEMY_DIALOGUE') {
       this.handleDialogueInput();
     } else if (phase === 'ENEMY_ATTACK') {
-      this.handleBulletHell(time, delta);
+      this.handleBulletHell(time, clampedDelta);
     } else if (phase === 'VICTORY') {
       this.handleVictoryInput();
     }
