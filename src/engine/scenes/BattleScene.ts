@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { ENEMIES } from '../../data/defaultData';
 import { soundManager } from '../../services/soundSynthesizer';
+import { voiceSynthesizer } from '../../services/voiceSynthesizer';
 import { EnemyAct, EnemyData } from '../../types/game';
+import { achievementManager } from '../achievementManager';
 import { BattleTurnManager, BattleTurnPhase } from '../BattleTurnManager';
 import { combatLogManager } from '../combatLogManager';
 import { gameState } from '../gameState';
@@ -469,6 +471,7 @@ export class BattleScene extends Phaser.Scene {
     this.redrawBattleBox(BattleScene.DEFAULT_BOX_BOUNDS);
     this.narrativeText.setVisible(true);
     this.narrativeText.setText(flavorText);
+    voiceSynthesizer.speak(flavorText, 'narrator');
     this.clearSubMenuItems();
     this.updateButtonSoulPosition();
 
@@ -1122,6 +1125,14 @@ export class BattleScene extends Phaser.Scene {
     this.enemySpeechBubble.setVisible(true);
     soundManager.playVoiceBlip('monster');
 
+    const voiceKey =
+      this.enemyData.id === 'toriel'
+        ? 'toriel'
+        : this.enemyData.id === 'napstablook'
+        ? 'napstablook'
+        : 'monster';
+    voiceSynthesizer.speak(text, voiceKey);
+
     combatLogManager.addEntry({
       turn: this.turnManager.getTurnNumber(),
       source: 'enemy',
@@ -1134,6 +1145,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private hideEnemySpeech() {
+    voiceSynthesizer.stop();
     this.enemySpeechBubble.setVisible(false);
   }
 
@@ -1531,6 +1543,7 @@ export class BattleScene extends Phaser.Scene {
       gameState.setFlag('toriel_resolved', true);
       gameState.setFlag('toriel_defeated', true);
       gameState.setFlag('toriel_killed', true);
+      achievementManager.unlock('ach_toriel_boss');
     }
     const rewards = gameState.addRewards(this.enemyData.expReward, this.enemyData.goldReward);
     this.refreshHUD();
@@ -1563,6 +1576,8 @@ export class BattleScene extends Phaser.Scene {
     soundManager.playSpare();
     this.clearBullets();
 
+    achievementManager.unlock('ach_first_mercy');
+
     gameState.recordVictory(true);
     gameState.recordEnemyOutcome(this.enemyData.id, 'spared');
     gameState.setFlag(`enemy_spared_${this.enemyData.id}`, true);
@@ -1574,6 +1589,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.enemyData.id === 'toriel') {
       gameState.setFlag('toriel_resolved', true);
       gameState.setFlag('toriel_spared', true);
+      achievementManager.unlock('ach_toriel_boss');
     }
     gameState.addRewards(0, this.enemyData.goldReward);
     this.refreshHUD();
@@ -1900,7 +1916,8 @@ export class BattleScene extends Phaser.Scene {
         this.events.off('virtual_action', this.handleVirtualAction, this);
       }
 
-      // 13. Reset internal state variables
+      // 13. Reset internal state variables & stop speech
+      voiceSynthesizer.stop();
       this.targetMoving = false;
       this.targetBarX = 0;
       this.attackTimer = 0;

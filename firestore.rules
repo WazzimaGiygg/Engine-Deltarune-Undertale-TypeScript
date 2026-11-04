@@ -37,6 +37,19 @@ service cloud.firestore {
                               && request.resource.data.userId == request.auth.uid;
         allow delete: if isOwner(userId) && isValidId(slotId);
       }
+
+      // Player Achievements & Milestones
+      match /achievements/{achievementId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) 
+                              && isValidId(userId) 
+                              && isValidId(achievementId) 
+                              && request.resource.data.userId == request.auth.uid
+                              && request.resource.data.achievementId is string
+                              && request.resource.data.title is string
+                              && request.resource.data.unlockedAt is string;
+        allow delete: if isOwner(userId) && isValidId(achievementId);
+      }
     }
 
     // Global Leaderboard between registered players

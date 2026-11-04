@@ -16,6 +16,7 @@ interface OverworldMenuModalProps {
   onOpenFirebaseModal?: () => void;
   onOpenLeaderboard?: () => void;
   onOpenTutorial?: () => void;
+  onOpenAchievements?: () => void;
 }
 
 export type MenuTab = 'ITEM' | 'STAT' | 'BESTIARY' | 'QUEST' | 'PHONE' | 'EQUIP' | 'SAVE';
@@ -30,6 +31,7 @@ export const OverworldMenuModal: React.FC<OverworldMenuModalProps> = ({
   onOpenFirebaseModal,
   onOpenLeaderboard,
   onOpenTutorial,
+  onOpenAchievements,
 }) => {
   const [activeTab, setActiveTab] = useState<MenuTab>('ITEM');
   const [selectedItemIdx, setSelectedItemIdx] = useState<number>(0);
@@ -708,6 +710,19 @@ export const OverworldMenuModal: React.FC<OverworldMenuModalProps> = ({
                     className="px-3 py-1.5 text-xs border border-yellow-500/80 bg-yellow-950/50 text-yellow-300 hover:bg-yellow-900 hover:border-yellow-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold shadow-[0_0_8px_rgba(250,204,21,0.2)]"
                   >
                     <span>🏆 PLACAR GLOBAL</span>
+                    <span>→</span>
+                  </button>
+                )}
+                {onOpenAchievements && (
+                  <button
+                    onClick={() => {
+                      soundManager.playMenuSelect();
+                      onClose();
+                      onOpenAchievements();
+                    }}
+                    className="px-3 py-1.5 text-xs border border-yellow-500/80 bg-yellow-950/50 text-yellow-300 hover:bg-yellow-900 hover:border-yellow-300 transition-colors cursor-pointer flex items-center gap-1.5 font-bold shadow-[0_0_8px_rgba(250,204,21,0.2)]"
+                  >
+                    <span>🎖️ CONQUISTAS</span>
                     <span>→</span>
                   </button>
                 )}

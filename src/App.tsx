@@ -9,8 +9,12 @@ import { LeaderboardModal } from './components/LeaderboardModal';
 import { OverworldMenuModal } from './components/OverworldMenuModal';
 import { PhaserGame } from './components/PhaserGame';
 import { ShopModal } from './components/ShopModal';
+import { CRTFullScreenOverlay } from './components/CRTFullScreenOverlay';
+import { SmartTvGuideOverlay } from './components/SmartTvGuideOverlay';
 import { SoundSettings } from './components/SoundSettings';
 import { VirtualController } from './components/VirtualController';
+import { AchievementToast } from './components/AchievementToast';
+import { AchievementsModal } from './components/AchievementsModal';
 import { gameState } from './engine/gameState';
 import { questManager } from './engine/questManager';
 import { OverworldScene } from './engine/scenes/OverworldScene';
@@ -29,11 +33,35 @@ export default function App() {
   const [questToast, setQuestToast] = useState<QuestNotification | null>(null);
   const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(auth.currentUser);
 
+  const [isTvMode, setIsTvMode] = useState(false);
+  const [lastRemoteKey, setLastRemoteKey] = useState<string | null>(null);
+
   const gameRef = useRef<Phaser.Game | null>(null);
   const secretBufferRef = useRef<string>('');
+
+  // Auto-detect Smart TV and Smartphone / Touch Screen devices
+  useEffect(() => {
+    const isTv =
+      typeof navigator !== 'undefined' &&
+      /SmartTV|Tizen|Web0S|webOS|NetCast|BRAVIA|Android TV|GoogleTV|HbbTV|Roku|AppleTV|Xbox|PlayStation|Hisense|Viera|CE-HTML/i.test(
+        navigator.userAgent
+      );
+    if (isTv) {
+      setIsTvMode(true);
+    }
+
+    const isMobile =
+      typeof window !== 'undefined' &&
+      ('ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        window.innerWidth <= 860);
+    // On mobile devices, always show virtual touch pad; on Smart TV, hide by default since remote control is used
+    setShowVirtualPad(isMobile || !isTv);
+  }, []);
 
   // Subscribe to Firebase Authentication state
   useEffect(() => {
@@ -73,7 +101,7 @@ export default function App() {
     return () => unsubQuest();
   }, []);
 
-  // V.0.0.2-M5.1: Global key sequence listener for "lula132026"
+  // Global key sequence listener for "lula132026"
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const char = e.key.toLowerCase();
@@ -113,18 +141,294 @@ export default function App() {
     }
   }, []);
 
-  const handleVirtualAction = (key: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'Z' | 'X' | 'C') => {
-    if (key === 'C') {
-      setIsMenuOpen((prev) => !prev);
-      return;
-    }
+  const handleVirtualAction = useCallback(
+    (key: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT' | 'Z' | 'X' | 'C') => {
+      if (key === 'C') {
+        setIsMenuOpen((prev) => !prev);
+        return;
+      }
 
-    if (!gameRef.current) return;
-    const activeScenes = gameRef.current.scene.getScenes(true);
-    activeScenes.forEach((s) => {
-      s.events.emit('virtual_action', key);
-    });
-  };
+      if (!gameRef.current) return;
+      const activeScenes = gameRef.current.scene.getScenes(true);
+      activeScenes.forEach((s) => {
+        s.events.emit('virtual_action', key);
+      });
+    },
+    []
+  );
+
+  // Smart TV Remote Control Handler (Samsung Tizen, LG webOS, Android TV, Fire TV, Apple TV)
+  useEffect(() => {
+    const handleTvKeyDown = (e: KeyboardEvent) => {
+      // Do not intercept if user is typing in form inputs
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
+      ) {
+        return;
+      }
+
+      const code = e.code;
+      const key = e.key;
+      const keyCode = e.keyCode || e.which;
+
+      // Smart TV Directional Keys
+      if (key === 'ArrowUp' || key === 'Up' || keyCode === 38 || code === 'ArrowUp') {
+        e.preventDefault();
+        setLastRemoteKey('▲ CIMA');
+        setIsTvMode(true);
+        handleVirtualAction('UP');
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'ArrowUp',
+            code: 'ArrowUp',
+            keyCode: 38,
+            which: 38,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+        return;
+      }
+      if (key === 'ArrowDown' || key === 'Down' || keyCode === 40 || code === 'ArrowDown') {
+        e.preventDefault();
+        setLastRemoteKey('▼ BAIXO');
+        setIsTvMode(true);
+        handleVirtualAction('DOWN');
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'ArrowDown',
+            code: 'ArrowDown',
+            keyCode: 40,
+            which: 40,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+        return;
+      }
+      if (key === 'ArrowLeft' || key === 'Left' || keyCode === 37 || code === 'ArrowLeft') {
+        e.preventDefault();
+        setLastRemoteKey('◀ ESQUERDA');
+        setIsTvMode(true);
+        handleVirtualAction('LEFT');
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'ArrowLeft',
+            code: 'ArrowLeft',
+            keyCode: 37,
+            which: 37,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+        return;
+      }
+      if (key === 'ArrowRight' || key === 'Right' || keyCode === 39 || code === 'ArrowRight') {
+        e.preventDefault();
+        setLastRemoteKey('▶ DIREITA');
+        setIsTvMode(true);
+        handleVirtualAction('RIGHT');
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            code: 'ArrowRight',
+            keyCode: 39,
+            which: 39,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+        return;
+      }
+
+      // Smart TV Confirm / Select / Action [Z]
+      // 13: Enter, 29443: Tizen Enter, 179: PlayPause, 403: Red button, 49: Num 1
+      if (
+        key === 'Enter' ||
+        key === 'Select' ||
+        key === 'Ok' ||
+        key === 'ColorF0Red' ||
+        key === '1' ||
+        keyCode === 13 ||
+        keyCode === 29443 ||
+        keyCode === 179 ||
+        keyCode === 403
+      ) {
+        e.preventDefault();
+        setLastRemoteKey('OK / Z');
+        setIsTvMode(true);
+        handleVirtualAction('Z');
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'z',
+            code: 'KeyZ',
+            keyCode: 90,
+            which: 90,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+        setTimeout(() => {
+          window.dispatchEvent(
+            new KeyboardEvent('keyup', {
+              key: 'z',
+              code: 'KeyZ',
+              keyCode: 90,
+              which: 90,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        }, 120);
+        return;
+      }
+
+      // Smart TV Cancel / Back / Return [X]
+      // 27: Escape, 10009: Tizen Return, 461: webOS Back, 8: Android TV Back, 404: Green button, 50: Num 2
+      if (
+        key === 'Escape' ||
+        key === 'Back' ||
+        key === 'GoBack' ||
+        key === 'BrowserBack' ||
+        key === 'ColorF1Green' ||
+        key === '2' ||
+        keyCode === 27 ||
+        keyCode === 10009 ||
+        keyCode === 461 ||
+        keyCode === 8 ||
+        keyCode === 404
+      ) {
+        e.preventDefault();
+        setLastRemoteKey('VOLTAR / X');
+        setIsTvMode(true);
+        handleVirtualAction('X');
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'x',
+            code: 'KeyX',
+            keyCode: 88,
+            which: 88,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+        setTimeout(() => {
+          window.dispatchEvent(
+            new KeyboardEvent('keyup', {
+              key: 'x',
+              code: 'KeyX',
+              keyCode: 88,
+              which: 88,
+              bubbles: true,
+              cancelable: true,
+            })
+          );
+        }, 120);
+        return;
+      }
+
+      // Smart TV Menu / Inventory [C]
+      // 18: Alt/Menu, 224: Menu, 457: Info, 458: Guide, 405: Yellow button, 51: Num 3
+      if (
+        key === 'Menu' ||
+        key === 'Settings' ||
+        key === 'ColorF2Yellow' ||
+        key === '3' ||
+        keyCode === 18 ||
+        keyCode === 224 ||
+        keyCode === 457 ||
+        keyCode === 458 ||
+        keyCode === 405
+      ) {
+        e.preventDefault();
+        setLastRemoteKey('MENU / C');
+        setIsTvMode(true);
+        handleVirtualAction('C');
+        return;
+      }
+
+      // Smart TV Blue Color Button / Key 4: Toggle CRT Overlay
+      if (key === 'ColorF3Blue' || key === '4' || keyCode === 406) {
+        e.preventDefault();
+        setLastRemoteKey('CRT TOGGLE');
+        soundManager.playMenuSelect();
+        gameState.setCrtFilter(!gameState.getCrtFilter());
+        return;
+      }
+
+      // Smart TV Key 5: Toggle Fullscreen
+      if (key === '5') {
+        e.preventDefault();
+        setLastRemoteKey('TELA CHEIA');
+        soundManager.playMenuSelect();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.().catch(() => {});
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
+        return;
+      }
+    };
+
+    const handleTvKeyUp = (e: KeyboardEvent) => {
+      const keyCode = e.keyCode || e.which;
+      const key = e.key;
+
+      if (key === 'ArrowUp' || key === 'Up' || keyCode === 38) {
+        window.dispatchEvent(
+          new KeyboardEvent('keyup', {
+            key: 'ArrowUp',
+            code: 'ArrowUp',
+            keyCode: 38,
+            which: 38,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      } else if (key === 'ArrowDown' || key === 'Down' || keyCode === 40) {
+        window.dispatchEvent(
+          new KeyboardEvent('keyup', {
+            key: 'ArrowDown',
+            code: 'ArrowDown',
+            keyCode: 40,
+            which: 40,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      } else if (key === 'ArrowLeft' || key === 'Left' || keyCode === 37) {
+        window.dispatchEvent(
+          new KeyboardEvent('keyup', {
+            key: 'ArrowLeft',
+            code: 'ArrowLeft',
+            keyCode: 37,
+            which: 37,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      } else if (key === 'ArrowRight' || key === 'Right' || keyCode === 39) {
+        window.dispatchEvent(
+          new KeyboardEvent('keyup', {
+            key: 'ArrowRight',
+            code: 'ArrowRight',
+            keyCode: 39,
+            which: 39,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleTvKeyDown, { capture: true, passive: false });
+    window.addEventListener('keyup', handleTvKeyUp, { capture: true, passive: false });
+    return () => {
+      window.removeEventListener('keydown', handleTvKeyDown, { capture: true });
+      window.removeEventListener('keyup', handleTvKeyUp, { capture: true });
+    };
+  }, [handleVirtualAction]);
 
   const handleSelectBattle = (enemyId: string) => {
     if (!gameRef.current) return;
@@ -219,6 +523,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col font-pixel selection:bg-yellow-400 selection:text-black">
+      {/* Full-Screen Retro CRT Monitor Shader Overlay (Scanlines, Barrel Curvature & 60Hz Phosphor Flicker) */}
+      <CRTFullScreenOverlay />
+
+      {/* Smart TV Remote Control Guide Overlay */}
+      <SmartTvGuideOverlay
+        isTvMode={isTvMode}
+        onToggleTvMode={() => setIsTvMode((prev) => !prev)}
+        lastRemoteKey={lastRemoteKey}
+      />
+
       {/* V.0.0.2-JQ.1: Clean top bar with essential information only */}
       <header className="flex items-center justify-between gap-6 px-4 py-3 border-b border-neutral-900 bg-black shrink-0">
         {/* Zone 1: Brand */}
@@ -243,6 +557,40 @@ export default function App() {
         {/* Zone 3: Actions */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           <SoundSettings />
+
+          {/* Smart TV Remote Mode Toggle */}
+          <button
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setIsTvMode((prev) => !prev);
+            }}
+            className={`px-2 sm:px-2.5 py-1 text-xs border transition-colors cursor-pointer flex items-center gap-1 font-bold whitespace-nowrap ${
+              isTvMode
+                ? 'border-cyan-400 bg-cyan-950/70 text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.4)]'
+                : 'border-neutral-700 text-neutral-400 hover:text-cyan-300 hover:border-cyan-500/70'
+            }`}
+            title="Alternar Modo Smart TV (Suporte a controle remoto com setas, OK, Voltar, Menu e botões coloridos)"
+          >
+            <span>📺</span>
+            <span className="hidden md:inline">TV</span>
+          </button>
+
+          {/* Virtual Touchpad Toggle for Mobile */}
+          <button
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setShowVirtualPad((prev) => !prev);
+            }}
+            className={`px-2 sm:px-2.5 py-1 text-xs border transition-colors cursor-pointer flex items-center gap-1 font-bold whitespace-nowrap ${
+              showVirtualPad
+                ? 'border-yellow-500/80 bg-yellow-950/40 text-yellow-300'
+                : 'border-neutral-700 text-neutral-400 hover:text-yellow-300'
+            }`}
+            title="Exibir ou ocultar controle touch virtual na tela"
+          >
+            <span>📱</span>
+            <span className="hidden md:inline">TOUCH</span>
+          </button>
 
           {/* Google Firebase Auth & Cloud Sync button */}
           {firebaseUser ? (
@@ -282,6 +630,19 @@ export default function App() {
           >
             <span>🏆</span>
             <span className="hidden sm:inline">PLACAR</span>
+          </button>
+
+          {/* Global Achievements Button */}
+          <button
+            onClick={() => {
+              soundManager.playMenuSelect();
+              setIsAchievementsOpen(true);
+            }}
+            className="px-2 sm:px-2.5 py-1 text-xs border border-yellow-500/80 bg-yellow-950/40 text-yellow-300 hover:bg-yellow-400 hover:text-black transition-colors cursor-pointer flex items-center gap-1.5 font-bold whitespace-nowrap shadow-[0_0_8px_rgba(250,204,21,0.2)]"
+            title="Ver Conquistas e Marcos do Jogador (Sincronizado no Firestore)"
+          >
+            <span>🎖️</span>
+            <span className="hidden sm:inline">CONQUISTAS</span>
           </button>
 
           {/* Bullet-Hell Tutorial & Daily Tip Button */}
@@ -398,7 +759,11 @@ export default function App() {
         {/* Virtual touch controls for mobile / tablet */}
         {showVirtualPad && (
           <div className="w-full mt-1">
-            <VirtualController onAction={handleVirtualAction} />
+            <VirtualController
+              onAction={handleVirtualAction}
+              onQuickSave={handleQuickSave}
+              onToggleCrt={() => gameState.setCrtFilter(!gameState.getCrtFilter())}
+            />
           </div>
         )}
 
@@ -424,6 +789,17 @@ export default function App() {
         onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenTutorial={() => setIsTutorialOpen(true)}
+        onOpenAchievements={() => setIsAchievementsOpen(true)}
+      />
+
+      {/* Visual Pop-up Notification for Unlocked Achievements */}
+      <AchievementToast />
+
+      {/* Achievements & Milestones Modal */}
+      <AchievementsModal
+        isOpen={isAchievementsOpen}
+        onClose={() => setIsAchievementsOpen(false)}
+        onOpenAuthModal={() => setIsFirebaseModalOpen(true)}
       />
 
       {/* Firebase Google Cloud Login Prompt Modal */}

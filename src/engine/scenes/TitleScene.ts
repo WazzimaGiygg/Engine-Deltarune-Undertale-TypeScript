@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { soundManager } from '../../services/soundSynthesizer';
+import { voiceSynthesizer } from '../../services/voiceSynthesizer';
 import { gameState } from '../gameState';
 import { SpriteGenerator } from '../spriteGenerator';
 
@@ -18,6 +19,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    voiceSynthesizer.stop();
     gameState.setActiveScene('TitleScene');
     SpriteGenerator.generateAllTextures(this);
     soundManager.playMusic('title_menu');

@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { ALL_ITEMS } from '../../data/defaultData';
 import { soundManager } from '../../services/soundSynthesizer';
+import { voiceSynthesizer } from '../../services/voiceSynthesizer';
 import { CharacterVoice, DialogueNode, DialoguePage } from '../../types/dialogue';
+import { achievementManager } from '../achievementManager';
 import { DialogueManager } from '../DialogueManager';
 import { gameState } from '../gameState';
 import { SpriteGenerator } from '../spriteGenerator';
@@ -630,6 +632,49 @@ export class OverworldScene extends Phaser.Scene {
           targetX: 320,
           targetY: 120,
         },
+        // Secret Passage behind the ancient red tree leading to the ancestral chamber
+        {
+          type: 'door',
+          x: 190,
+          y: 110,
+          targetRoom: 'room_secret_chamber',
+          targetX: 320,
+          targetY: 380,
+        },
+      ],
+    },
+
+    room_secret_chamber: {
+      id: 'room_secret_chamber',
+      name: 'Ruínas - Câmara Secreta Ancestral',
+      width: 640,
+      height: 480,
+      floorTile: 'tile_floor_ruins',
+      wallTiles: [],
+      objects: [
+        {
+          type: 'sign',
+          x: 320,
+          y: 160,
+          dialogueId: 'secret_shrine_inscription',
+          text: '* Você descobriu a Câmara Secreta Ancestral das Ruínas!\n* "Àquele que explora além do caminho evidente, a determinação sorri nas trevas."',
+        },
+        {
+          type: 'save',
+          x: 320,
+          y: 250,
+          id: 'save_secret_shrine',
+          dialogueId: 'save_secret_shrine',
+          text: '* O sussurro das pedras antigas e a descoberta de uma sala secreta enchem você de DETERMINAÇÃO.\n\n* (HP totalmente restaurado e Arquivo Salvo!)',
+        },
+        {
+          type: 'door',
+          x: 320,
+          y: 430,
+          targetRoom: 'room_toriel_house_exterior',
+          targetX: 190,
+          targetY: 170,
+        },
       ],
     },
 
@@ -1209,6 +1254,7 @@ export class OverworldScene extends Phaser.Scene {
 
     // Clean up on shutdown
     this.events.once('shutdown', () => {
+      voiceSynthesizer.stop();
       this.events.off('virtual_action', this.handleVirtualAction, this);
       this.game.events.off('reload_game_state', this.handleReloadGameState, this);
     });
@@ -1275,6 +1321,7 @@ export class OverworldScene extends Phaser.Scene {
   private wakeUpFrisk() {
     if (gameState.getFlag('frisk_awoken')) return;
     gameState.setFlag('frisk_awoken', true);
+    achievementManager.unlock('ach_awakening');
 
     if (this.wakeUpTween) {
       this.wakeUpTween.stop();
@@ -1337,6 +1384,19 @@ export class OverworldScene extends Phaser.Scene {
     const room = this.rooms[roomId] || this.rooms.room_awakening;
     this.currentRoomId = room.id;
     gameState.setCurrentRoom(room.id, undefined, undefined, room.name);
+
+    if (room.id === 'room_snowdin_forest_entrance') {
+      achievementManager.unlock('ach_snowdin_gate');
+      const curStats = gameState.getStats();
+      if (curStats.kills === 0 && curStats.lv === 1) {
+        achievementManager.unlock('ach_pure_pacifist');
+      }
+    } else if (room.id === 'room_secret_chamber') {
+      achievementManager.unlock('ach_secret_room');
+      gameState.setFlag('secret_room_found', true);
+    } else if (room.id === 'room_player_bedroom' || room.id === 'room_toriel_bedroom') {
+      achievementManager.unlock('ach_warm_pie');
+    }
 
     // Floor & Atmospheric rendering
     if (room.id === 'room_awakening') {
@@ -3404,9 +3464,11 @@ export class OverworldScene extends Phaser.Scene {
     }
 
     this.activeVoice = this.currentDialoguePage.voice || 'monster';
+    voiceSynthesizer.speak(this.currentFullText, this.activeVoice);
   }
 
   private closeDialogue() {
+    voiceSynthesizer.stop();
     this.isDialogueActive = false;
     this.dialogueBox.setVisible(false);
     this.dialogueArrow.setVisible(false);
@@ -5687,6 +5749,7 @@ export class OverworldScene extends Phaser.Scene {
                       this.interactablesGroup.add(sansShadow);
 
                       gameState.setFlag('sans_intro_done', true);
+                      achievementManager.unlock('ach_sans_encounter');
                       this.isCutsceneActive = false;
                     },
                   });

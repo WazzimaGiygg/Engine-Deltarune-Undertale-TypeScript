@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { soundManager } from '../../services/soundSynthesizer';
+import { voiceSynthesizer } from '../../services/voiceSynthesizer';
 import { combatLogManager } from '../combatLogManager';
 import { gameState } from '../gameState';
 import { SpriteGenerator } from '../spriteGenerator';
@@ -190,6 +191,7 @@ export class FloweyBattleScene extends Phaser.Scene {
     // Virtual action support
     this.events.on('virtual_action', this.handleVirtualAction, this);
     this.events.once('shutdown', () => {
+      voiceSynthesizer.stop();
       this.input.keyboard?.off('keydown-Z', onKeyAdvance);
       this.input.keyboard?.off('keydown-ENTER', onKeyAdvance);
       this.input.keyboard?.off('keydown-SPACE', onKeyAdvance);
@@ -243,6 +245,7 @@ export class FloweyBattleScene extends Phaser.Scene {
       soundManager.playVoiceBlip('flowey');
       const text = this.introLines[this.introCurrentIndex];
       this.speechText.setText(text);
+      voiceSynthesizer.speak(text, 'flowey');
       this.introCurrentIndex++;
 
       combatLogManager.addEntry({
@@ -447,6 +450,7 @@ export class FloweyBattleScene extends Phaser.Scene {
       soundManager.playVoiceBlip('flowey');
       const text = 'Ei, amigo, você perdeu todas elas.\n\nVamos tentar de novo, tá bom?';
       this.speechText.setText(text);
+      voiceSynthesizer.speak(text, 'flowey');
 
       combatLogManager.addEntry({
         turn: 1,
@@ -465,6 +469,7 @@ export class FloweyBattleScene extends Phaser.Scene {
       soundManager.playVoiceBlip('flowey');
       const text = 'Isso é uma piada?\nVocê tem morte cerebral?!\n\nCORRA. NAS. BALAS.';
       this.speechText.setText(text);
+      voiceSynthesizer.speak(text, 'flowey');
 
       combatLogManager.addEntry({
         turn: 1,
@@ -484,6 +489,7 @@ export class FloweyBattleScene extends Phaser.Scene {
       this.floweySprite.setTexture('flowey_evil');
       const text = 'Você sabe o que está acontecendo aqui, não sabe?\n\nVocê só queria me ver sofrer.';
       this.speechText.setText(text);
+      voiceSynthesizer.speak(text, 'flowey_creepy');
 
       combatLogManager.addEntry({
         turn: 1,
@@ -548,7 +554,9 @@ export class FloweyBattleScene extends Phaser.Scene {
     this.floweySprite.setTexture('flowey_evil');
     this.speechContainer.setVisible(true);
     soundManager.playVoiceBlip('monster');
-    this.speechText.setText('SEU IDIOTA.\n\nNeste mundo, é MATAR ou SER MORTO!');
+    const evilHitSpeech = 'SEU IDIOTA.\n\nNeste mundo, é MATAR ou SER MORTO!';
+    this.speechText.setText(evilHitSpeech);
+    voiceSynthesizer.speak(evilHitSpeech, 'flowey_creepy');
 
     combatLogManager.addEntry({
       turn: 1,
@@ -575,6 +583,7 @@ export class FloweyBattleScene extends Phaser.Scene {
 
     if (fromDodge) {
       this.speechText.setText('MORRA!');
+      voiceSynthesizer.speak('MORRA!', 'flowey_creepy');
       combatLogManager.addEntry({
         turn: 1,
         source: 'enemy',
@@ -585,7 +594,9 @@ export class FloweyBattleScene extends Phaser.Scene {
         reaction: 'Flowey gargalha com loucura: "MORRA!"',
       });
     } else {
-      this.speechText.setText('Por que alguém deixaria passar uma chance como esta?!\n\nMORRA!');
+      const deathLine = 'Por que alguém deixaria passar uma chance como esta?!\n\nMORRA!';
+      this.speechText.setText(deathLine);
+      voiceSynthesizer.speak(deathLine, 'flowey_creepy');
       combatLogManager.addEntry({
         turn: 1,
         source: 'enemy',
@@ -703,10 +714,13 @@ export class FloweyBattleScene extends Phaser.Scene {
   private showNextTorielLine() {
     if (this.torielSpeechIndex < this.torielSpeechLines.length) {
       soundManager.playVoiceBlip('toriel');
-      this.speechText.setText(this.torielSpeechLines[this.torielSpeechIndex]);
+      const text = this.torielSpeechLines[this.torielSpeechIndex];
+      this.speechText.setText(text);
+      voiceSynthesizer.speak(text, 'toriel');
       this.torielSpeechIndex++;
       this.torielTimerEvent = this.time.delayedCall(2800, () => this.showNextTorielLine());
     } else {
+      voiceSynthesizer.stop();
       // Speech finished: Toriel guides Frisk north
       this.speechContainer.setVisible(false);
       if (this.torielSpriteRef) {

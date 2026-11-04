@@ -54,6 +54,22 @@
         "updatedAt": { "type": "string", "description": "Submission timestamp" }
       },
       "required": ["userId", "displayName", "score", "lv"]
+    },
+    "PlayerAchievement": {
+      "title": "PlayerAchievement",
+      "description": "Milestone or achievement earned by the player",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "achievementId": { "type": "string", "description": "Unique achievement ID", "maxLength": 64 },
+        "title": { "type": "string", "description": "Title of the achievement", "maxLength": 64 },
+        "description": { "type": "string", "description": "Description of the milestone", "maxLength": 256 },
+        "icon": { "type": "string", "description": "Emoji or icon for the achievement", "maxLength": 16 },
+        "points": { "type": "number", "description": "Determination points rewarded" },
+        "category": { "type": "string", "description": "Category of the achievement", "maxLength": 32 },
+        "unlockedAt": { "type": "string", "description": "ISO timestamp when unlocked" }
+      },
+      "required": ["userId", "achievementId", "title", "unlockedAt"]
     }
   },
   "firestore": {
@@ -65,9 +81,14 @@
       "schema": "PlayerSaveSlot",
       "description": "Cloud save slots for the player"
     },
+    "/users/{userId}/achievements/{achievementId}": {
+      "schema": "PlayerAchievement",
+      "description": "Milestones and achievements unlocked by the player"
+    },
     "/leaderboard/{userId}": {
       "schema": "LeaderboardEntry",
       "description": "Global player score and leaderboard ranking"
     }
   }
 }
+

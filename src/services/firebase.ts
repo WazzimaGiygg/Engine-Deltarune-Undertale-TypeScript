@@ -367,3 +367,78 @@ export async function fetchLeaderboard(maxLimit = 25): Promise<LeaderboardEntry[
     return [];
   }
 }
+
+// 7. Player Achievements in Firestore
+export interface CloudAchievementDoc {
+  userId: string;
+  achievementId: string;
+  title: string;
+  description: string;
+  icon: string;
+  points: number;
+  category: string;
+  unlockedAt: string;
+}
+
+/**
+ * Persists an unlocked achievement to the user's Firestore document
+ */
+export async function saveAchievementToCloud(
+  userId: string,
+  achievement: {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    points: number;
+    category: string;
+    unlockedAt?: string;
+  }
+): Promise<boolean> {
+  const path = `users/${userId}/achievements/${achievement.id}`;
+  try {
+    const docRef = doc(db, 'users', userId, 'achievements', achievement.id);
+    const payload: CloudAchievementDoc = {
+      userId,
+      achievementId: achievement.id,
+      title: achievement.title,
+      description: achievement.description,
+      icon: achievement.icon,
+      points: achievement.points,
+      category: achievement.category,
+      unlockedAt: achievement.unlockedAt || new Date().toISOString(),
+    };
+    await setDoc(docRef, payload, { merge: true });
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    return false;
+  }
+}
+
+/**
+ * Loads all unlocked achievements for a user from Firestore
+ */
+export async function loadAchievementsFromCloud(
+  userId: string
+): Promise<Record<string, { unlockedAt: string }>> {
+  const path = `users/${userId}/achievements`;
+  try {
+    const colRef = collection(db, 'users', userId, 'achievements');
+    const snapshot = await getDocs(colRef);
+    const result: Record<string, { unlockedAt: string }> = {};
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data() as CloudAchievementDoc;
+      if (data && data.achievementId) {
+        result[data.achievementId] = {
+          unlockedAt: data.unlockedAt || new Date().toISOString(),
+        };
+      }
+    });
+    return result;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+    return {};
+  }
+}
+

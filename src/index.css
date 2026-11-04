@@ -57,6 +57,25 @@ canvas {
   }
 }
 
+/* Full-Screen Authentic CRT Phosphor Flicker */
+@keyframes crt-fullscreen-flicker {
+  0% {
+    opacity: 0.975;
+  }
+  25% {
+    opacity: 0.995;
+  }
+  50% {
+    opacity: 0.965;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.98;
+  }
+}
+
 .crt-dynamic-sweep {
   animation: crt-sweep 8s linear infinite;
 }
@@ -65,9 +84,31 @@ canvas {
   animation: crt-flicker 0.12s infinite;
 }
 
+.crt-fullscreen-flicker {
+  animation: crt-fullscreen-flicker 0.1s steps(2, start) infinite;
+}
+
 /* GPU hardware compositing containment */
 .gpu-accelerated {
   transform: translateZ(0);
   backface-visibility: hidden;
   contain: layout paint;
 }
+
+/* Fullscreen CRT vignette and scanline patterns */
+.crt-fs-scanlines {
+  background-image: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.035), rgba(0, 255, 0, 0.015), rgba(0, 0, 255, 0.035));
+  background-size: 100% 3px, 6px 100%;
+}
+
+.crt-fs-vignette {
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.35) 78%,
+    rgba(0, 0, 0, 0.88) 100%
+  );
+}
+

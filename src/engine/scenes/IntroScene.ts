@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { soundManager } from '../../services/soundSynthesizer';
+import { voiceSynthesizer } from '../../services/voiceSynthesizer';
 import { gameState } from '../gameState';
 import { SpriteGenerator } from '../spriteGenerator';
 
@@ -157,6 +158,7 @@ export class IntroScene extends Phaser.Scene {
     this.displayCharCount = 0;
     this.slideText.setText('');
     this.slideDuration = 0;
+    voiceSynthesizer.speak(`${slide.title}. ${slide.text}`, 'narrator');
   }
 
   // Draw Undertale-style nostalgic sepia/monochrome pixel panels
@@ -327,6 +329,7 @@ export class IntroScene extends Phaser.Scene {
   }
 
   public goToTitle() {
+    voiceSynthesizer.stop();
     soundManager.playMenuSelect();
     this.cameras.main.fadeOut(350, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
